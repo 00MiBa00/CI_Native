@@ -1,2 +1,0 @@
-app_identifier ENV.fetch("IOS_BUNDLE_ID", "")
-# username not required when using App Store Connect API key

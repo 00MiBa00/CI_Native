@@ -1,94 +1,58 @@
 default_platform(:ios)
 
 platform :ios do
-  before_all do
+  lane :init_ci do
+    # Built-in action (not a lane) — avoids name conflicts
+    setup_ci
+
     app_store_connect_api_key(
       key_id: ENV["APPSTORE_KEY_ID"],
       issuer_id: ENV["APPSTORE_ISSUER_ID"],
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
-  end
 
-  desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)"
-  lane :setup_ci do
-    raw = (ENV["MATCH_REPOSITORY"].to_s.strip.empty? ? ENV["GITHUB_REPOSITORY"] : ENV["MATCH_REPOSITORY"]).to_s
-    slug = raw.encode("UTF-8", invalid: :replace, undef: :replace)
-            .strip
-            .gsub(/\s+/, "")
-            .gsub(/^["']|["']$/, "")
-            .sub(%r{^.*github\.com[:/]}, "")
-            .sub(/\.git$/, "")
-    owner, repo = slug.split("/", 2)
-    UI.user_error!("Could not parse org/repo from '#{raw}' (normalized: '#{slug}')") if owner.to_s.empty? || repo.to_s.empty?
-
-    UI.message("Using repo for github_action: #{owner}/#{repo}")
-
-    github_action(
-      api_token: ENV["GH_PAT"],
-      org: owner,
-      repo: repo,
-      match_org: owner,
-      match_repo: repo
-    )
-  end
-
-  desc "Sync signing via match (SSH, supports short MATCH_REPOSITORY)"
-  lane :sync_certificates do
-    repo = ENV["MATCH_REPOSITORY"].to_s.strip
-    if !repo.include?(":") && !repo.include?("://")
-      repo = "git@github.com:#{repo}.git"
-    end
-
+    # Match fully configured via ENV — no Matchfile needed
     match(
       type: "appstore",
-      readonly: false,
+      readonly: (ENV["MATCH_READONLY"] || "true") == "true",
+      git_url: ENV["MATCH_GIT_URL"],
+      git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
       app_identifier: [
         ENV["IOS_BUNDLE_ID"],
-        "#{ENV['IOS_BUNDLE_ID']}.notifications"
+        "#{ENV["IOS_BUNDLE_ID"]}.notifications"
       ],
-      storage_mode: "git",
-      git_url: repo,
-      git_branch: "main"
+      clone_branch_directly: true
     )
-  end
 
-  desc "Resolve Swift Package Manager dependencies"
-  lane :resolve_spm do
-    sh "xcodebuild -resolvePackageDependencies -project #{ENV['PROJECT_NAME']}.xcodeproj -scheme #{ENV['PROJECT_NAME']}"
-  end
-
-  desc "Build .ipa from native Xcode project (SPM only)"
-  lane :build do
-    build_app(
-      project: "#{ENV['PROJECT_NAME']}.xcodeproj",
-      scheme: ENV["PROJECT_NAME"],
-      configuration: "Release",
+    gym(
+      project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
+      scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
       export_method: "app-store",
-      output_directory: "build/ios",
-      output_name: "#{ENV['PROJECT_NAME']}.ipa",
-      include_bitcode: false,
       clean: true
     )
+
+    pilot(skip_waiting_for_build_processing: true)
   end
 
-  desc "Upload to TestFlight (skip processing like Core)"
-  lane :upload_beta do
-    upload_to_testflight(
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,
-      groups: ["Internal QA"],
-      changelog: "Automated build"
+  lane :sync_certificates do
+    setup_ci
+    app_store_connect_api_key(
+      key_id: ENV["APPSTORE_KEY_ID"],
+      issuer_id: ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"],
+      is_key_content_base64: false
     )
-  end
-
-  desc "Release to App Store (metadata skipped)"
-  lane :release do
-    deliver(
-      submit_for_review: false,
-      force: true,
-      skip_screenshots: true,
-      skip_metadata: true
+    match(
+      type: "appstore",
+      readonly: (ENV["MATCH_READONLY"] || "true") == "true",
+      git_url: ENV["MATCH_GIT_URL"],
+      git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
+      app_identifier: [
+        ENV["IOS_BUNDLE_ID"],
+        "#{ENV["IOS_BUNDLE_ID"]}.notifications"
+      ],
+      clone_branch_directly: true
     )
   end
 end
