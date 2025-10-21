@@ -1,0 +1,64 @@
+name: iOS Build & TestFlight (Native, HTTPS match)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+
+      # App identifiers / team
+      APP_IDENTIFIER: com.your.bundleid
+      APPLE_TEAM_ID: YOUR_TEAM_ID
+      APPLE_DEVELOPER_EMAIL: your-dev-email@domain.com
+      APPLE_CONNECT_EMAIL: your-asc-email@domain.com
+
+      # App Store Connect API
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_CONTENTS: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENTS }}
+
+      # fastlane match via HTTPS
+      MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}  # e.g. https://github.com/your-org/ios-certificates.git
+      MATCH_GIT_BRANCH: main
+      FASTLANE_MATCH_PASSWORD: ${{ secrets.FASTLANE_MATCH_PASSWORD }}
+      # Optional (recommended for private repos): Basic base64(username:token)
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+
+      # Project structure
+      IOS_PROJECT_DIR: ios
+      XCWORKSPACE_NAME: MyApp
+      XCODEPROJ_NAME: MyApp
+      SCHEME: MyApp
+      CONFIGURATION: Release
+      OUTPUT_DIR: build/ios
+      OUTPUT_NAME: MyApp.ipa
+
+      # TestFlight options
+      TF_DISTRIBUTE_EXTERNAL: "false"
+      TF_GROUPS: "Internal QA"
+      TF_CHANGELOG: "Automated build"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ruby & Bundler
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: Install gems
+        run: bundle install --path vendor/bundle
+
+      - name: Pod install
+        run: |
+          cd $IOS_PROJECT_DIR
+          bundle exec pod install --repo-update
+
+      - name: Build & Upload to TestFlight
+        run: bundle exec fastlane ios beta

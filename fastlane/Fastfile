@@ -1,0 +1,96 @@
+default_platform(:ios)
+
+platform :ios do
+  before_all do
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENTS"],
+      is_key_content_base64: false
+    )
+  end
+
+  desc "Sync code signing via match (HTTPS repo)"
+  lane :sync_certificates do
+    match(
+      type: "appstore",
+      readonly: false,
+      app_identifier: [ENV["APP_IDENTIFIER"]],
+      git_url: ENV["MATCH_REPOSITORY"],                 # HTTPS URL to the certs repo
+      git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
+      git_basic_authorization: ENV["MATCH_GIT_BASIC_AUTHORIZATION"], # Optional: 'Basic base64(username:token)'
+      username: ENV["APPLE_CONNECT_EMAIL"]
+    )
+  end
+
+  desc "Install CocoaPods"
+  lane :install_pods do
+    cocoapods(
+      clean_install: true,
+      repo_update: true,
+      project_directory: ENV["IOS_PROJECT_DIR"] || "ios"
+    )
+  end
+
+  desc "Bump build number/version"
+  lane :bump do
+    if ENV["NEW_VERSION"]
+      increment_version_number(
+        xcodeproj: "#{ENV['IOS_PROJECT_DIR'] || 'ios'}/#{ENV['XCODEPROJ_NAME'] || 'MyApp'}.xcodeproj",
+        version_number: ENV["NEW_VERSION"]
+      )
+    end
+    increment_build_number(
+      xcodeproj: "#{ENV['IOS_PROJECT_DIR'] || 'ios'}/#{ENV['XCODEPROJ_NAME'] || 'MyApp'}.xcodeproj"
+    )
+  end
+
+  desc "Build .ipa from native Xcode workspace/project"
+  lane :build do
+    build_app(
+      workspace: "#{ENV['IOS_PROJECT_DIR'] || 'ios'}/#{ENV['XCWORKSPACE_NAME'] || 'MyApp'}.xcworkspace",
+      # If no workspace, comment above and uncomment project:
+      # project: "#{ENV['IOS_PROJECT_DIR'] || 'ios'}/#{ENV['XCODEPROJ_NAME'] || 'MyApp'}.xcodeproj",
+      scheme: ENV["SCHEME"] || "MyApp",
+      configuration: ENV["CONFIGURATION"] || "Release",
+      export_method: "app-store",
+      output_directory: ENV["OUTPUT_DIR"] || "build/ios",
+      output_name: ENV["OUTPUT_NAME"] || "MyApp.ipa",
+      include_bitcode: false,
+      clean: true,
+      export_options: {
+        method: "app-store",
+        uploadBitcode: false,
+        compileBitcode: false
+      }
+    )
+  end
+
+  desc "Upload to TestFlight"
+  lane :beta do
+    sync_certificates
+    install_pods
+    bump
+    build
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      distribute_external: ENV["TF_DISTRIBUTE_EXTERNAL"] == "true",
+      groups: (ENV["TF_GROUPS"] || "Internal QA").split(",").map(&:strip),
+      changelog: ENV["TF_CHANGELOG"] || "Automated build"
+    )
+  end
+
+  desc "Release to App Store (metadata optional)"
+  lane :release do
+    sync_certificates
+    install_pods
+    bump
+    build
+    deliver(
+      submit_for_review: false,
+      force: true,
+      skip_screenshots: true,
+      skip_metadata: true
+    )
+  end
+end
