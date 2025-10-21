@@ -11,9 +11,9 @@ platform :ios do
     )
   end
 
-  desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT, same as Core)"
+  desc "Setup CI
   lane :prepare_ci do
-    github_actions # expects GH_PAT in ENV
+    github_action # expects GH_PAT in ENV
   end
 
   desc "Sync signing via match (SSH, supports short MATCH_REPOSITORY)"
