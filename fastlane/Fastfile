@@ -1,67 +1,66 @@
-\
-        default_platform(:ios)
+default_platform(:ios)
 
-        platform :ios do
-          before_all do
-            app_store_connect_api_key(
-              key_id: ENV["APPSTORE_KEY_ID"],
-              issuer_id: ENV["APPSTORE_ISSUER_ID"],
-              key_content: ENV["APPSTORE_P8"],
-              is_key_content_base64: false
-            )
-          end
+platform :ios do
+  before_all do
+    app_store_connect_api_key(
+      key_id: ENV["APPSTORE_KEY_ID"],
+      issuer_id: ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"],
+      is_key_content_base64: false
+    )
+  end
 
-          desc "Sync signing via match (CI_Core-style secrets; SSH deploy key is handled in workflow)"
-          lane :sync_certificates do
-            match(
-              type: "appstore",
-              readonly: false,
-              app_identifier: [
-                ENV["IOS_BUNDLE_ID"],
-                "#{ENV['IOS_BUNDLE_ID']}.notifications"
-              ],
-              storage_mode: "git",
-              git_url: ENV["MATCH_REPOSITORY"],
-              git_branch: "main"
-            )
-          end
+  desc "Sync signing via match (HTTPS token-in-URL as in CI_Core)"
+  lane :sync_certificates do
+    match(
+      type: "appstore",
+      readonly: false,
+      app_identifier: [
+        ENV["IOS_BUNDLE_ID"],
+        "{ENV['IOS_BUNDLE_ID']}.notifications"
+      ],
+      storage_mode: "git",
+      git_url: ENV["MATCH_REPOSITORY"],
+      git_branch: "main"
+    )
+  end
 
-          desc "Resolve Swift Package Manager dependencies"
-          lane :resolve_spm do
-            sh "xcodebuild -resolvePackageDependencies -project #{ENV['XCODEPROJ_NAME']}.xcodeproj -scheme #{ENV['SCHEME']}"
-          end
+  desc "Resolve Swift Package Manager dependencies"
+  lane :resolve_spm do
+    sh "xcodebuild -resolvePackageDependencies -project ChickCare.xcodeproj -scheme ChickenCare"
+  end
 
-          desc "Build .ipa from native Xcode project (SPM only)"
-          lane :build do
-            build_app(
-              project: "#{ENV['XCODEPROJ_NAME']}.xcodeproj",
-              scheme: ENV["SCHEME"],
-              configuration: "Release",
-              export_method: "app-store",
-              output_directory: "build/ios",
-              output_name: "#{ENV['SCHEME']}.ipa",
-              include_bitcode: false,
-              clean: true
-            )
-          end
+  desc "Build .ipa from native Xcode project (SPM only)"
+  lane :build do
+    build_app(
+      project: "ChickCare.xcodeproj",
+      scheme: "ChickenCare",
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build/ios",
+      output_name: "ChickenCare.ipa",
+      include_bitcode: false,
+      clean: true
+    )
+  end
 
-          desc "Upload to TestFlight"
-          lane :upload_beta do
-            upload_to_testflight(
-              skip_waiting_for_build_processing: true,
-              distribute_external: false,
-              groups: ["Internal QA"],
-              changelog: "Automated build"
-            )
-          end
+  desc "Upload to TestFlight (skip processing like in Core)"
+  lane :upload_beta do
+    upload_to_testflight(
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      groups: ["Internal QA"],
+      changelog: "Automated build"
+    )
+  end
 
-          desc "Deliver to App Store (metadata skipped)"
-          lane :release do
-            deliver(
-              submit_for_review: false,
-              force: true,
-              skip_screenshots: true,
-              skip_metadata: true
-            )
-          end
-        end
+  desc "Deliver to App Store (metadata skipped)"
+  lane :release do
+    deliver(
+      submit_for_review: false,
+      force: true,
+      skip_screenshots: true,
+      skip_metadata: true
+    )
+  end
+end
