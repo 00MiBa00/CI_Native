@@ -14,7 +14,6 @@ platform :ios do
   lane :setup_ci do
     github_action(
       api_token: ENV["GH_PAT"],
-      force: true
     )
   end
 
