@@ -1,15 +1,19 @@
-name: Generate/Sync Certificates (match, HTTPS)
+
+name: Generate/Sync Certificates (match, SSH auto key)
 
 on:
   workflow_dispatch:
+
+concurrency:
+  group: ios-certs-manual
+  cancel-in-progress: false
 
 jobs:
   certs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
@@ -20,15 +24,33 @@ jobs:
       - name: Install gems
         run: bundle install --path vendor/bundle
 
-      - name: Sync certs & profiles (match via HTTPS token URL)
+      - name: Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)
+        run: bundle exec fastlane ios setup_ci
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+
+      - name: Add match SSH deploy key (if present)
+        shell: bash
+        run: |
+          if [ -n "$MATCH_DEPLOY_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$MATCH_DEPLOY_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/id_rsa
+          else
+            echo "MATCH_DEPLOY_KEY is empty; assuming github_actions configured SSH already."
+          fi
+        env:
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+
+      - name: Sync certs & profiles (match via SSH)
         run: bundle exec fastlane ios sync_certificates
         env:
-          # App Store Connect API
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
-
-          # App / match
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
-          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}   # e.g. https://x-access-token:${{ secrets.GH_PAT }}@github.com/org/ios-certificates.git
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}

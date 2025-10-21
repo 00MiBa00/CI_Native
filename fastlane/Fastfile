@@ -1,3 +1,4 @@
+
 default_platform(:ios)
 
 platform :ios do
@@ -10,41 +11,51 @@ platform :ios do
     )
   end
 
-  desc "Sync signing via match (HTTPS token-in-URL as in CI_Core)"
+  desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT, same as Core)"
+  lane :setup_ci do
+    github_actions # expects GH_PAT in ENV
+  end
+
+  desc "Sync signing via match (SSH, supports short MATCH_REPOSITORY)"
   lane :sync_certificates do
+    repo = ENV["MATCH_REPOSITORY"].to_s.strip
+    if !repo.include?(":") && !repo.include?("://")
+      repo = "git@github.com:#{repo}.git"
+    end
+
     match(
       type: "appstore",
       readonly: false,
       app_identifier: [
         ENV["IOS_BUNDLE_ID"],
-        "{ENV['IOS_BUNDLE_ID']}.notifications"
+        "#{ENV['IOS_BUNDLE_ID']}.notifications"
       ],
       storage_mode: "git",
-      git_url: ENV["MATCH_REPOSITORY"],
+      git_url: repo,
       git_branch: "main"
     )
   end
 
   desc "Resolve Swift Package Manager dependencies"
   lane :resolve_spm do
-    sh "xcodebuild -resolvePackageDependencies -project ChickCare.xcodeproj -scheme ChickenCare"
+    sh "xcodebuild -resolvePackageDependencies -project #{ENV['PROJECT_NAME']}.xcodeproj -scheme #{ENV['PROJECT_NAME']}"
   end
 
   desc "Build .ipa from native Xcode project (SPM only)"
   lane :build do
     build_app(
-      project: "ChickCare.xcodeproj",
-      scheme: "ChickenCare",
+      project: "#{ENV['PROJECT_NAME']}.xcodeproj",
+      scheme: ENV["PROJECT_NAME"],
       configuration: "Release",
       export_method: "app-store",
       output_directory: "build/ios",
-      output_name: "ChickenCare.ipa",
+      output_name: "#{ENV['PROJECT_NAME']}.ipa",
       include_bitcode: false,
       clean: true
     )
   end
 
-  desc "Upload to TestFlight (skip processing like in Core)"
+  desc "Upload to TestFlight (skip processing like Core)"
   lane :upload_beta do
     upload_to_testflight(
       skip_waiting_for_build_processing: true,
@@ -54,7 +65,7 @@ platform :ios do
     )
   end
 
-  desc "Deliver to App Store (metadata skipped)"
+  desc "Release to App Store (metadata skipped)"
   lane :release do
     deliver(
       submit_for_review: false,

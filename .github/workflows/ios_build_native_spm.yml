@@ -1,17 +1,12 @@
+
 name: Build iOS (Native, SPM) & TestFlight
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - 'fastlane/**'
-      - '.github/workflows/ios_build_native_spm.yml'
-      - '*.xcodeproj/**'
-      - '*.xcodeproj'
-      - '**/*.swift'
-      - 'Package.resolved'
-      - 'Package.swift'
   workflow_dispatch:
+
+concurrency:
+  group: ios-manual-build
+  cancel-in-progress: false
 
 jobs:
   certs:
@@ -28,7 +23,28 @@ jobs:
       - name: Install gems
         run: bundle install --path vendor/bundle
 
-      - name: Sync certs & profiles (match via HTTPS token URL)
+      - name: Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)
+        run: bundle exec fastlane ios setup_ci
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+
+      - name: Add match SSH deploy key (if present)
+        shell: bash
+        run: |
+          if [ -n "$MATCH_DEPLOY_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$MATCH_DEPLOY_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            eval "$(ssh-agent -s)"
+            ssh-add ~/.ssh/id_rsa
+          else
+            echo "MATCH_DEPLOY_KEY is empty; assuming github_actions configured SSH already."
+          fi
+        env:
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+
+      - name: Sync certs & profiles (match via SSH)
         run: bundle exec fastlane ios sync_certificates
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
@@ -69,6 +85,8 @@ jobs:
 
       - name: Build .ipa
         run: bundle exec fastlane ios build
+        env:
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
 
   upload:
     runs-on: macos-latest
@@ -92,3 +110,4 @@ jobs:
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
