@@ -31,6 +31,7 @@ jobs:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
 
       - name: Add match SSH deploy key (if present)
         shell: bash
