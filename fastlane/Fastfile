@@ -10,9 +10,8 @@ platform :ios do
     )
   end
 
-  desc "Setup CI"
-  lane :prepare_ci do
-    # извлекаем org/repo из MATCH_REPOSITORY
+  desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)"
+  lane :setup_ci do
     slug = ENV["MATCH_REPOSITORY"].to_s.strip
     if slug.include?("://") || slug.include?(":")
       slug = slug.sub(%r{^.*github\.com[:/]}, "").sub(/\.git$/, "")
