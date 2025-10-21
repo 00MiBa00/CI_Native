@@ -12,16 +12,8 @@ platform :ios do
 
   desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)"
   lane :setup_ci do
-    slug = ENV["MATCH_REPOSITORY"].to_s.strip
-    if slug.include?("://") || slug.include?(":")
-      slug = slug.sub(%r{^.*github\.com[:/]}, "").sub(/\.git$/, "")
-    end
-    org, repo = slug.split("/", 2)
-
     github_action(
       api_token: ENV["GH_PAT"],
-      match_org: org,
-      match_repo: repo
     )
   end
 
