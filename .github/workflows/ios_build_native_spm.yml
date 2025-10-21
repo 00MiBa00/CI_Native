@@ -1,0 +1,79 @@
+\
+        name: Build iOS (Native, SPM) & TestFlight
+
+        on:
+          push:
+            branches: [ main ]
+          workflow_dispatch:
+
+        jobs:
+          build:
+            runs-on: macos-latest
+
+            env:
+              # --- Non-secret repo variables (so team can rename without code edits) ---
+              XCODEPROJ_NAME: ChickCare      # e.g. ChickCare (project at ./ChickCare.xcodeproj)
+              SCHEME: ChickenCare            # e.g. main app scheme (Shared)
+
+            steps:
+              - name: Checkout
+                uses: actions/checkout@v4
+
+              - name: Setup Ruby & Bundler
+                uses: ruby/setup-ruby@v1
+                with:
+                  ruby-version: '3.2'
+                  bundler-cache: true
+
+              - name: Install gems
+                run: bundle install --path vendor/bundle
+
+              - name: Add match SSH deploy key
+                shell: bash
+                run: |
+                  mkdir -p ~/.ssh
+                  echo "$MATCH_DEPLOY_KEY" > ~/.ssh/id_rsa
+                  chmod 600 ~/.ssh/id_rsa
+                  ssh-keyscan github.com >> ~/.ssh/known_hosts
+                  eval "$(ssh-agent -s)"
+                  ssh-add ~/.ssh/id_rsa
+                env:
+                  MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+
+              - name: Cache SwiftPM
+                uses: actions/cache@v4
+                with:
+                  path: |
+                    ~/Library/Developer/Xcode/DerivedData
+                    ~/Library/Caches/org.swift.swiftpm
+                    ~/.swiftpm
+                  key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+                  restore-keys: |
+                    ${{ runner.os }}-spm-
+
+              - name: Sync certs & profiles (match)
+                run: bundle exec fastlane ios sync_certificates
+                env:
+                  # App Store Connect API (CI_Core naming)
+                  APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+                  APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
+
+                  # App / match
+                  IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+                  MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
+                  MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+                  # Optional legacy variable kept for parity (not used directly)
+                  GH_PAT: ${{ secrets.GH_PAT }}
+
+              - name: Resolve SPM packages
+                run: bundle exec fastlane ios resolve_spm
+
+              - name: Build & Upload to TestFlight
+                run: bundle exec fastlane ios beta
+                env:
+                  APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+                  APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+                  APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
+                  IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}

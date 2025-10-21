@@ -1,6 +1,2 @@
-app_identifier ENV["APP_IDENTIFIER"]
-username ENV["APPLE_CONNECT_EMAIL"]
-
-# Optional: provide metadata/screenshots paths if you ship metadata
-# screenshots_path "./fastlane/screenshots"
-# metadata_path "./fastlane/metadata"
+app_identifier ENV["IOS_BUNDLE_ID"]
+# username not required when using App Store Connect API key
