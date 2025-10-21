@@ -12,8 +12,24 @@ platform :ios do
 
   desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)"
   lane :setup_ci do
+    raw = (ENV["MATCH_REPOSITORY"].to_s.strip.empty? ? ENV["GITHUB_REPOSITORY"] : ENV["MATCH_REPOSITORY"]).to_s
+    slug = raw.encode("UTF-8", invalid: :replace, undef: :replace)
+            .strip
+            .gsub(/\s+/, "")
+            .gsub(/^["']|["']$/, "")
+            .sub(%r{^.*github\.com[:/]}, "")
+            .sub(/\.git$/, "")
+    owner, repo = slug.split("/", 2)
+    UI.user_error!("Could not parse org/repo from '#{raw}' (normalized: '#{slug}')") if owner.to_s.empty? || repo.to_s.empty?
+
+    UI.message("Using repo for github_action: #{owner}/#{repo}")
+
     github_action(
-      api_token: ENV["GH_PAT"]
+      api_token: ENV["GH_PAT"],
+      org: owner,
+      repo: repo,
+      match_org: owner,
+      match_repo: repo
     )
   end
 
