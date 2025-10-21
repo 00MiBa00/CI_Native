@@ -8,9 +8,18 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
-      - name: Install gems
-        run: bundle install --path vendor/bundle
+          bundler-cache: false
+      - name: Prepare bundler (arm64-safe)
+        run: |
+          gem install bundler -v ">=2.5.0"
+          bundle config set force_ruby_platform true
+          if [ -f Gemfile.lock ]; then
+            bundle lock --add-platform ruby || true
+            bundle lock --add-platform arm64-darwin-23 || true
+            bundle lock --add-platform x86_64-darwin-23 || true
+          fi
+      - name: Bundle install
+        run: bundle install --path vendor/bundle --jobs 4 --retry 3
       - name: Sync certs (write mode)
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}

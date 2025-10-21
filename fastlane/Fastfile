@@ -2,7 +2,7 @@ default_platform(:ios)
 
 platform :ios do
   lane :init_ci do
-    # Built-in action (not a lane) — avoids name conflicts
+    # Use built-in fastlane action (not a lane) to prep CI
     setup_ci
 
     app_store_connect_api_key(
@@ -12,7 +12,7 @@ platform :ios do
       is_key_content_base64: false
     )
 
-    # Match fully configured via ENV — no Matchfile needed
+    # Certificates & profiles via ENV (no Matchfile)
     match(
       type: "appstore",
       readonly: (ENV["MATCH_READONLY"] || "true") == "true",
@@ -25,6 +25,7 @@ platform :ios do
       clone_branch_directly: true
     )
 
+    # Build
     gym(
       project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
       scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
@@ -32,9 +33,11 @@ platform :ios do
       clean: true
     )
 
+    # Upload to TestFlight (deliverfile kept for parity; we use pilot here)
     pilot(skip_waiting_for_build_processing: true)
   end
 
+  desc "Only sync certs/profiles (use MATCH_READONLY=false in Generate Certs workflow)"
   lane :sync_certificates do
     setup_ci
     app_store_connect_api_key(
