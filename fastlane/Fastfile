@@ -11,7 +11,7 @@
             )
           end
 
-          desc "Sync signing via match (CI_Core secrets naming; SSH deploy key is added by workflow)"
+          desc "Sync signing via match (CI_Core-style secrets; SSH deploy key is handled in workflow)"
           lane :sync_certificates do
             match(
               type: "appstore",
@@ -26,7 +26,7 @@
             )
           end
 
-          desc "Resolve Swift Package Manager dependencies (explicit for cache/debug)"
+          desc "Resolve Swift Package Manager dependencies"
           lane :resolve_spm do
             sh "xcodebuild -resolvePackageDependencies -project #{ENV['XCODEPROJ_NAME']}.xcodeproj -scheme #{ENV['SCHEME']}"
           end
@@ -46,10 +46,7 @@
           end
 
           desc "Upload to TestFlight"
-          lane :beta do
-            sync_certificates
-            resolve_spm
-            build
+          lane :upload_beta do
             upload_to_testflight(
               skip_waiting_for_build_processing: true,
               distribute_external: false,
@@ -60,9 +57,6 @@
 
           desc "Deliver to App Store (metadata skipped)"
           lane :release do
-            sync_certificates
-            resolve_spm
-            build
             deliver(
               submit_for_review: false,
               force: true,
