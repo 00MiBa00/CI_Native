@@ -1,4 +1,3 @@
-
 default_platform(:ios)
 
 platform :ios do
@@ -11,9 +10,20 @@ platform :ios do
     )
   end
 
-  desc "Setup CI
+  desc "Setup CI"
   lane :prepare_ci do
-    github_action # expects GH_PAT in ENV
+    # извлекаем org/repo из MATCH_REPOSITORY
+    slug = ENV["MATCH_REPOSITORY"].to_s.strip
+    if slug.include?("://") || slug.include?(":")
+      slug = slug.sub(%r{^.*github\.com[:/]}, "").sub(/\.git$/, "")
+    end
+    org, repo = slug.split("/", 2)
+
+    github_action(
+      api_token: ENV["GH_PAT"],
+      match_org: org,
+      match_repo: repo
+    )
   end
 
   desc "Sync signing via match (SSH, supports short MATCH_REPOSITORY)"
