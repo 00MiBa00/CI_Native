@@ -25,7 +25,7 @@ jobs:
         run: bundle install --path vendor/bundle
 
       - name: Setup CI
-        run: bundle exec fastlane ios prepare_ci
+        run: bundle exec fastlane ios setup_ci
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
