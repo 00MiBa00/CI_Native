@@ -1,3 +1,3 @@
 source "https://rubygems.org"
 gem "fastlane"
-plugin "fastlane-plugin-github_action"
+gem "fastlane-plugin-github_action", "~> 1.0"
