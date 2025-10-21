@@ -3,21 +3,22 @@ name: Build iOS (Native, SPM) & TestFlight
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ios-manual-build
+  cancel-in-progress: false
+
 jobs:
   certs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-
       - name: Install gems
         run: bundle install --path vendor/bundle
-
       - name: Sync certs & profiles (match via HTTPS token URL)
         run: bundle exec fastlane ios sync_certificates
         env:
@@ -33,7 +34,6 @@ jobs:
     needs: certs
     steps:
       - uses: actions/checkout@v4
-
       - name: Cache SwiftPM
         uses: actions/cache@v4
         with:
@@ -44,19 +44,15 @@ jobs:
           key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
             ${{ runner.os }}-spm-
-
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-
       - name: Install gems
         run: bundle install --path vendor/bundle
-
       - name: Resolve SPM
         run: bundle exec fastlane ios resolve_spm
-
       - name: Build .ipa
         run: bundle exec fastlane ios build
 
@@ -65,16 +61,13 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Ruby & Bundler
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
-
       - name: Install gems
         run: bundle install --path vendor/bundle
-
       - name: Upload to TestFlight (skip processing)
         run: bundle exec fastlane ios upload_beta
         env:
