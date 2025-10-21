@@ -13,7 +13,7 @@ platform :ios do
   desc "Setup CI (auto create MATCH_DEPLOY_KEY via GH_PAT)"
   lane :setup_ci do
     github_action(
-      api_token: ENV["GH_PAT"],
+      api_token: ENV["GH_PAT"]
     )
   end
 
