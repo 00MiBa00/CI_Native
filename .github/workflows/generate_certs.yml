@@ -43,7 +43,7 @@ jobs:
             eval "$(ssh-agent -s)"
             ssh-add ~/.ssh/id_rsa
           else
-            echo "MATCH_DEPLOY_KEY is empty; assuming github_actions configured SSH already."
+            echo "MATCH_DEPLOY_KEY is empty; assuming github_action configured SSH already."
           fi
         env:
           MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
