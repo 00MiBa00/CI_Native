@@ -11,8 +11,10 @@ platform :ios do
       is_key_content_base64: false
     )
 
+    # readonly: true — только если явно передали "true" в ENV
     readonly_value = ENV["MATCH_READONLY"] == "true"
-    UI.message("🔐 match readonly mode: #{readonly_value}")
+    readonly_value = false if ENV["MATCH_READONLY"].nil?
+    UI.message("🔐 match readonly mode (init_ci): #{readonly_value}")
 
     match(
       type: "appstore",
@@ -26,7 +28,7 @@ platform :ios do
       clone_branch_directly: true
     )
 
-    # If your project uses Pods, uncomment next line to install
+    # If your project uses Pods, uncomment next line
     # cocoapods(silent: true)
 
     gym(
@@ -47,9 +49,15 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
+
+    # ТА ЖЕ ЛОГИКА, без || "true"
+    readonly_value = ENV["MATCH_READONLY"] == "true"
+    readonly_value = false if ENV["MATCH_READONLY"].nil?
+    UI.message("🔐 match readonly mode (sync_certificates): #{readonly_value}")
+
     match(
       type: "appstore",
-      readonly: (ENV["MATCH_READONLY"] || "true") == "true",
+      readonly: readonly_value,
       git_url: ENV["MATCH_GIT_URL"],
       git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
       app_identifier: [
