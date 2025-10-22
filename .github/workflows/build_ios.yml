@@ -1,4 +1,4 @@
-name: Build iOS (Pure Xcode)
+name: Build iOS (auto cert fallback)
 on: { workflow_dispatch: {} }
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
           set -o pipefail
           bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
 
-      - name: Build + Upload (init_ci)
+      - name: Build + Upload (init_ci has fallback inside)
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
@@ -37,7 +37,6 @@ jobs:
           MATCH_GIT_URL:       https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ secrets.MATCH_REPOSITORY }}.git
           MATCH_GIT_BRANCH:    main
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
-          MATCH_READONLY:      "true"
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
         run: bundle exec fastlane ios init_ci
