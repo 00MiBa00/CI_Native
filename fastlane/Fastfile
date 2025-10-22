@@ -11,9 +11,12 @@ platform :ios do
       is_key_content_base64: false
     )
 
+    readonly_value = ENV["MATCH_READONLY"] == "true"
+    UI.message("🔐 match readonly mode: #{readonly_value}")
+
     match(
       type: "appstore",
-      readonly: (ENV["MATCH_READONLY"] || "true") == "true",
+      readonly: readonly_value,
       git_url: ENV["MATCH_GIT_URL"],
       git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
       app_identifier: [
