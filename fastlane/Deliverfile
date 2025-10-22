@@ -1,5 +1,7 @@
 submit_for_review false
 automatic_release false
-force true
+skip_binary_upload false
+force false
+skip_metadata true
 skip_screenshots true
 run_precheck_before_submit false
