@@ -1,7 +1,7 @@
 PODS:
-  - AppsFlyerFramework (6.17.1):
-    - AppsFlyerFramework/Main (= 6.17.1)
-  - AppsFlyerFramework/Main (6.17.1)
+  - AppsFlyerFramework (6.17.2):
+    - AppsFlyerFramework/Main (= 6.17.2)
+  - AppsFlyerFramework/Main (6.17.2)
   - Firebase/Core (11.15.0):
     - Firebase/CoreOnly
     - FirebaseAnalytics (~> 11.15.0)
@@ -133,7 +133,7 @@ SPEC REPOS:
     - PromisesObjC
 
 SPEC CHECKSUMS:
-  AppsFlyerFramework: 11ef2dea3fa755f9ed8ba53267012ee1c62d7dc0
+  AppsFlyerFramework: 3e48c87fd356e7cbf09b87e176c0b04dc42f95fe
   Firebase: d99ac19b909cd2c548339c2241ecd0d1599ab02e
   FirebaseAnalytics: 6433dfd311ba78084fc93bdfc145e8cb75740eae
   FirebaseCore: efb3893e5b94f32b86e331e3bd6dadf18b66568e
