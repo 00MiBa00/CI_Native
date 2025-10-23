@@ -1,5 +1,4 @@
-${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources.sh
-${PODS_CONFIGURATION_BUILD_DIR}/AppsFlyerFramework/AppsFlyerLib_Privacy.bundle
+${PODS_ROOT}/Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt-resources.sh
 ${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCore/FirebaseCore_Privacy.bundle
 ${PODS_CONFIGURATION_BUILD_DIR}/FirebaseCoreInternal/FirebaseCoreInternal_Privacy.bundle
 ${PODS_CONFIGURATION_BUILD_DIR}/FirebaseInstallations/FirebaseInstallations_Privacy.bundle

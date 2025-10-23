@@ -90,6 +90,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8F0A5C732E86E2F600D9D970 /* ChickenCare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = ChickenCare;
 			sourceTree = "<group>";
 		};
@@ -205,7 +207,6 @@
 				8F0A5C6E2E86E2F600D9D970 /* Frameworks */,
 				8F0A5C6F2E86E2F600D9D970 /* Resources */,
 				8F8BF7832E96A9EA00BFD40F /* Embed Foundation Extensions */,
-				0B3A0BF8CB5D54485A1FCE8F /* [CP] Embed Pods Frameworks */,
 				0A227AE7E9179EC4FA4FFBC2 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
@@ -265,6 +266,7 @@
 				8F8BF7732E96A9EA00BFD40F /* Sources */,
 				8F8BF7742E96A9EA00BFD40F /* Frameworks */,
 				8F8BF7752E96A9EA00BFD40F /* Resources */,
+				5DBBFF4FA99C939FC147CE9B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -366,38 +368,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
-			outputPaths = (
-			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		0B3A0BF8CB5D54485A1FCE8F /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			inputPaths = (
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		1E385B09F3EC4B085D2216FC /* [CP] Check Pods Manifest.lock */ = {
@@ -420,6 +397,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5DBBFF4FA99C939FC147CE9B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		E5DDF759525B83F887FEBA8A /* [CP] Check Pods Manifest.lock */ = {
