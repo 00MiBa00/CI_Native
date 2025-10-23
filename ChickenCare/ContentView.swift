@@ -1,11 +1,11 @@
 import SwiftUI
 import AppsFlyerLib
-import Firebase
 import FirebaseMessaging
 import UserNotifications
 import WebKit
 import Network
 import AppTrackingTransparency
+import FirebaseCore
 
 class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
     

@@ -1,21 +1,17 @@
-source 'https://cdn.cocoapods.org/'
 platform :ios, '14.0'
 
-use_frameworks! :linkage => :static
-use_modular_headers!
-
 target 'ChickCare' do
-  # Firebase
-  pod 'FirebaseAnalytics'
-  pod 'FirebaseMessaging'
-  pod 'FirebaseCore'
-  pod 'GoogleUtilities'
+  use_frameworks!
 
-  # AppsFlyer
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
   pod 'AppsFlyerFramework'
+end
 
-  target 'ImageNotificationServiceExt' do
-    inherit! :search_paths
-    pod 'FirebaseMessaging'
-  end
+target 'ImageNotificationServiceExt' do
+  use_frameworks!
+
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
+  pod 'AppsFlyerFramework'
 end
