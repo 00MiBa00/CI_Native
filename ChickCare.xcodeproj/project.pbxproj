@@ -68,7 +68,7 @@
 		9567A07B2EAA298A00647832 /* FirebaseMessaging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseMessaging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9567A07F2EAA29B500647832 /* FirebaseMessaging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseMessaging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9567A0832EAA29BA00647832 /* FirebaseCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		9567A0862EAA29E000647832 /* AppsFlyerLib.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = AppsFlyerLib.xcframework; path = Pods/AppsFlyerFramework/binaries/xcframework/full/AppsFlyerLib.xcframework; sourceTree = "<group>"; };
+		9567A0862EAA29E000647832 /* AppsFlyerLib.xcframework */ = {isa = PBXFileReference; expectedSignature = "AppleDeveloperProgram:6UQAD4B3U2:APPSFLYER LTD"; lastKnownFileType = wrapper.xcframework; name = AppsFlyerLib.xcframework; path = Pods/AppsFlyerFramework/binaries/xcframework/full/AppsFlyerLib.xcframework; sourceTree = "<group>"; };
 		9567A0892EAA29EB00647832 /* FirebaseCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9567A08C2EAA2A0600647832 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UserNotifications.framework; sourceTree = DEVELOPER_DIR; };
 		C65C6822EB361E4DF2C55929 /* Pods-ImageNotificationServiceExt.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ImageNotificationServiceExt.release.xcconfig"; path = "Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt.release.xcconfig"; sourceTree = "<group>"; };
@@ -611,11 +611,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ChickenCare/ChickenCare.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 16;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JQH8YGN4JV;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = JQH8YGN4JV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -642,7 +642,7 @@
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.urbanroad.noise;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "Urban Road Noise App";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Urban Road Noise App";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -662,11 +662,11 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ChickenCare/ChickenCare.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 16;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = JQH8YGN4JV;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = JQH8YGN4JV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -693,7 +693,7 @@
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.urbanroad.noise;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "";
+				PROVISIONING_PROFILE_SPECIFIER = "Urban Road Noise App";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "Urban Road Noise App";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -796,6 +796,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 8F639780CD365AEB0B3A0D32 /* Pods-ImageNotificationServiceExt.debug.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ImageNotificationServiceExt/ImageNotificationServiceExt.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				CODE_SIGN_STYLE = Manual;
@@ -833,6 +834,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = C65C6822EB361E4DF2C55929 /* Pods-ImageNotificationServiceExt.release.xcconfig */;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ImageNotificationServiceExt/ImageNotificationServiceExt.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				CODE_SIGN_STYLE = Manual;
