@@ -7,11 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8F0A5F472E8FE76E00D9D970 /* AppsFlyerLib in Frameworks */ = {isa = PBXBuildFile; productRef = 8F0A5F462E8FE76E00D9D970 /* AppsFlyerLib */; };
-		8F0A5F4A2E8FE79200D9D970 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8F0A5F492E8FE79200D9D970 /* FirebaseAnalytics */; };
-		8F0A5F4C2E8FE79200D9D970 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8F0A5F4B2E8FE79200D9D970 /* FirebaseMessaging */; };
+		081B65AB739E2A9F4765EC41 /* Pods_ImageNotificationServiceExt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5986E34E0870B22C02F0412D /* Pods_ImageNotificationServiceExt.framework */; };
 		8F8BF77E2E96A9EA00BFD40F /* ImageNotificationServiceExt.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8F8BF7772E96A9EA00BFD40F /* ImageNotificationServiceExt.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		8F8BF7862E96AA0E00BFD40F /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 8F8BF7852E96AA0E00BFD40F /* FirebaseMessaging */; };
+		D8975C01C1ADD4ADE8D699F8 /* Pods_ChickCare.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79E92DB3F3141F9B5F6BF2D3 /* Pods_ChickCare.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +51,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0FEE5A09F9B56D193EB986FE /* Pods-ChickCare.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ChickCare.debug.xcconfig"; path = "Target Support Files/Pods-ChickCare/Pods-ChickCare.debug.xcconfig"; sourceTree = "<group>"; };
+		3D9E32E13B20A8852E735991 /* Pods-ChickCare.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ChickCare.release.xcconfig"; path = "Target Support Files/Pods-ChickCare/Pods-ChickCare.release.xcconfig"; sourceTree = "<group>"; };
+		40BBCD50E84FA565D05D6C01 /* Pods-ImageNotificationServiceExt.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ImageNotificationServiceExt.debug.xcconfig"; path = "Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt.debug.xcconfig"; sourceTree = "<group>"; };
+		5986E34E0870B22C02F0412D /* Pods_ImageNotificationServiceExt.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ImageNotificationServiceExt.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6254D95BB993F09A273DD76F /* Pods-ImageNotificationServiceExt.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ImageNotificationServiceExt.release.xcconfig"; path = "Target Support Files/Pods-ImageNotificationServiceExt/Pods-ImageNotificationServiceExt.release.xcconfig"; sourceTree = "<group>"; };
+		79E92DB3F3141F9B5F6BF2D3 /* Pods_ChickCare.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ChickCare.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A5C712E86E2F600D9D970 /* ChickCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ChickCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A5C7F2E86E2F800D9D970 /* ChickCareTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChickCareTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A5C892E86E2F800D9D970 /* ChickCareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChickCareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,17 +77,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8F0A5C732E86E2F600D9D970 /* ChickenCare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = ChickenCare;
-			sourceTree = "<group>";
-		};
-		8F0A5C822E86E2F800D9D970 /* ChickenCareTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ChickenCareTests;
-			sourceTree = "<group>";
-		};
-		8F0A5C8C2E86E2F800D9D970 /* ChickenCareUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ChickenCareUITests;
 			sourceTree = "<group>";
 		};
 		8F8BF7782E96A9EA00BFD40F /* ImageNotificationServiceExt */ = {
@@ -101,9 +97,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8F0A5F4C2E8FE79200D9D970 /* FirebaseMessaging in Frameworks */,
-				8F0A5F4A2E8FE79200D9D970 /* FirebaseAnalytics in Frameworks */,
-				8F0A5F472E8FE76E00D9D970 /* AppsFlyerLib in Frameworks */,
+				D8975C01C1ADD4ADE8D699F8 /* Pods_ChickCare.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,7 +119,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8F8BF7862E96AA0E00BFD40F /* FirebaseMessaging in Frameworks */,
+				081B65AB739E2A9F4765EC41 /* Pods_ImageNotificationServiceExt.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,11 +131,10 @@
 			children = (
 				8F0A5F4D2E8FECAB00D9D970 /* ChickCare-Info.plist */,
 				8F0A5C732E86E2F600D9D970 /* ChickenCare */,
-				8F0A5C822E86E2F800D9D970 /* ChickenCareTests */,
-				8F0A5C8C2E86E2F800D9D970 /* ChickenCareUITests */,
 				8F8BF7782E96A9EA00BFD40F /* ImageNotificationServiceExt */,
 				8F8BF7842E96AA0E00BFD40F /* Frameworks */,
 				8F0A5C722E86E2F600D9D970 /* Products */,
+				92F296063B261C282748B826 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -159,8 +152,22 @@
 		8F8BF7842E96AA0E00BFD40F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				79E92DB3F3141F9B5F6BF2D3 /* Pods_ChickCare.framework */,
+				5986E34E0870B22C02F0412D /* Pods_ImageNotificationServiceExt.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		92F296063B261C282748B826 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				0FEE5A09F9B56D193EB986FE /* Pods-ChickCare.debug.xcconfig */,
+				3D9E32E13B20A8852E735991 /* Pods-ChickCare.release.xcconfig */,
+				40BBCD50E84FA565D05D6C01 /* Pods-ImageNotificationServiceExt.debug.xcconfig */,
+				6254D95BB993F09A273DD76F /* Pods-ImageNotificationServiceExt.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -170,10 +177,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8F0A5C932E86E2F800D9D970 /* Build configuration list for PBXNativeTarget "ChickCare" */;
 			buildPhases = (
+				1E385B09F3EC4B085D2216FC /* [CP] Check Pods Manifest.lock */,
 				8F0A5C6D2E86E2F600D9D970 /* Sources */,
 				8F0A5C6E2E86E2F600D9D970 /* Frameworks */,
 				8F0A5C6F2E86E2F600D9D970 /* Resources */,
 				8F8BF7832E96A9EA00BFD40F /* Embed Foundation Extensions */,
+				0B3A0BF8CB5D54485A1FCE8F /* [CP] Embed Pods Frameworks */,
+				0A227AE7E9179EC4FA4FFBC2 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -184,11 +194,6 @@
 				8F0A5C732E86E2F600D9D970 /* ChickenCare */,
 			);
 			name = ChickCare;
-			packageProductDependencies = (
-				8F0A5F462E8FE76E00D9D970 /* AppsFlyerLib */,
-				8F0A5F492E8FE79200D9D970 /* FirebaseAnalytics */,
-				8F0A5F4B2E8FE79200D9D970 /* FirebaseMessaging */,
-			);
 			productName = ChickenCare;
 			productReference = 8F0A5C712E86E2F600D9D970 /* ChickCare.app */;
 			productType = "com.apple.product-type.application";
@@ -206,12 +211,7 @@
 			dependencies = (
 				8F0A5C812E86E2F800D9D970 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				8F0A5C822E86E2F800D9D970 /* ChickenCareTests */,
-			);
 			name = ChickCareTests;
-			packageProductDependencies = (
-			);
 			productName = ChickenCareTests;
 			productReference = 8F0A5C7F2E86E2F800D9D970 /* ChickCareTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -229,12 +229,7 @@
 			dependencies = (
 				8F0A5C8B2E86E2F800D9D970 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				8F0A5C8C2E86E2F800D9D970 /* ChickenCareUITests */,
-			);
 			name = ChickCareUITests;
-			packageProductDependencies = (
-			);
 			productName = ChickenCareUITests;
 			productReference = 8F0A5C892E86E2F800D9D970 /* ChickCareUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -243,6 +238,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8F8BF7802E96A9EA00BFD40F /* Build configuration list for PBXNativeTarget "ImageNotificationServiceExt" */;
 			buildPhases = (
+				E5DDF759525B83F887FEBA8A /* [CP] Check Pods Manifest.lock */,
 				8F8BF7732E96A9EA00BFD40F /* Sources */,
 				8F8BF7742E96A9EA00BFD40F /* Frameworks */,
 				8F8BF7752E96A9EA00BFD40F /* Resources */,
@@ -255,9 +251,6 @@
 				8F8BF7782E96A9EA00BFD40F /* ImageNotificationServiceExt */,
 			);
 			name = ImageNotificationServiceExt;
-			packageProductDependencies = (
-				8F8BF7852E96AA0E00BFD40F /* FirebaseMessaging */,
-			);
 			productName = ImageNotificationServiceExt;
 			productReference = 8F8BF7772E96A9EA00BFD40F /* ImageNotificationServiceExt.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -297,10 +290,6 @@
 			);
 			mainGroup = 8F0A5C682E86E2F600D9D970;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				8F0A5F452E8FE76E00D9D970 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */,
-				8F0A5F482E8FE79200D9D970 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8F0A5C722E86E2F600D9D970 /* Products */;
 			projectDirPath = "";
@@ -344,6 +333,87 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		0A227AE7E9179EC4FA4FFBC2 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		0B3A0BF8CB5D54485A1FCE8F /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		1E385B09F3EC4B085D2216FC /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ChickCare-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E5DDF759525B83F887FEBA8A /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-ImageNotificationServiceExt-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8F0A5C6D2E86E2F600D9D970 /* Sources */ = {
@@ -511,6 +581,7 @@
 		};
 		8F0A5C942E86E2F800D9D970 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0FEE5A09F9B56D193EB986FE /* Pods-ChickCare.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -561,6 +632,7 @@
 		};
 		8F0A5C952E86E2F800D9D970 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3D9E32E13B20A8852E735991 /* Pods-ChickCare.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -697,6 +769,7 @@
 		};
 		8F8BF7812E96A9EA00BFD40F /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 40BBCD50E84FA565D05D6C01 /* Pods-ImageNotificationServiceExt.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
@@ -733,6 +806,7 @@
 		};
 		8F8BF7822E96A9EA00BFD40F /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6254D95BB993F09A273DD76F /* Pods-ImageNotificationServiceExt.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Distribution: TRINA SOLAR ITALY CONSTRUCTION SRL (JQH8YGN4JV)";
@@ -817,48 +891,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		8F0A5F452E8FE76E00D9D970 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/AppsFlyerSDK/AppsFlyerFramework";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.17.6;
-			};
-		};
-		8F0A5F482E8FE79200D9D970 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 12.3.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		8F0A5F462E8FE76E00D9D970 /* AppsFlyerLib */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8F0A5F452E8FE76E00D9D970 /* XCRemoteSwiftPackageReference "AppsFlyerFramework" */;
-			productName = AppsFlyerLib;
-		};
-		8F0A5F492E8FE79200D9D970 /* FirebaseAnalytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8F0A5F482E8FE79200D9D970 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		8F0A5F4B2E8FE79200D9D970 /* FirebaseMessaging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8F0A5F482E8FE79200D9D970 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseMessaging;
-		};
-		8F8BF7852E96AA0E00BFD40F /* FirebaseMessaging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8F0A5F482E8FE79200D9D970 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseMessaging;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8F0A5C692E86E2F600D9D970 /* Project object */;
 }
