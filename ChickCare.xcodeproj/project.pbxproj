@@ -9,6 +9,13 @@
 /* Begin PBXBuildFile section */
 		081B65AB739E2A9F4765EC41 /* Pods_ImageNotificationServiceExt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5986E34E0870B22C02F0412D /* Pods_ImageNotificationServiceExt.framework */; };
 		8F8BF77E2E96A9EA00BFD40F /* ImageNotificationServiceExt.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8F8BF7772E96A9EA00BFD40F /* ImageNotificationServiceExt.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9567A07C2EAA298A00647832 /* FirebaseMessaging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A07B2EAA298A00647832 /* FirebaseMessaging.framework */; };
+		9567A0802EAA29B500647832 /* FirebaseMessaging.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A07F2EAA29B500647832 /* FirebaseMessaging.framework */; };
+		9567A0842EAA29BA00647832 /* FirebaseCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A0832EAA29BA00647832 /* FirebaseCore.framework */; };
+		9567A0872EAA29E000647832 /* AppsFlyerLib.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A0862EAA29E000647832 /* AppsFlyerLib.xcframework */; };
+		9567A08A2EAA29EB00647832 /* FirebaseCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A0892EAA29EB00647832 /* FirebaseCore.framework */; };
+		9567A08D2EAA2A0600647832 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A08C2EAA2A0600647832 /* UserNotifications.framework */; };
+		9567A08E2EAA2A0D00647832 /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9567A08C2EAA2A0600647832 /* UserNotifications.framework */; };
 		D8975C01C1ADD4ADE8D699F8 /* Pods_ChickCare.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 79E92DB3F3141F9B5F6BF2D3 /* Pods_ChickCare.framework */; };
 /* End PBXBuildFile section */
 
@@ -62,6 +69,12 @@
 		8F0A5C892E86E2F800D9D970 /* ChickCareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ChickCareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8F0A5F4D2E8FECAB00D9D970 /* ChickCare-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ChickCare-Info.plist"; sourceTree = "<group>"; };
 		8F8BF7772E96A9EA00BFD40F /* ImageNotificationServiceExt.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ImageNotificationServiceExt.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		9567A07B2EAA298A00647832 /* FirebaseMessaging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseMessaging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9567A07F2EAA29B500647832 /* FirebaseMessaging.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseMessaging.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9567A0832EAA29BA00647832 /* FirebaseCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9567A0862EAA29E000647832 /* AppsFlyerLib.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = AppsFlyerLib.xcframework; path = Pods/AppsFlyerFramework/binaries/xcframework/full/AppsFlyerLib.xcframework; sourceTree = "<group>"; };
+		9567A0892EAA29EB00647832 /* FirebaseCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = FirebaseCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9567A08C2EAA2A0600647832 /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/UserNotifications.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -77,8 +90,6 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8F0A5C732E86E2F600D9D970 /* ChickenCare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = ChickenCare;
 			sourceTree = "<group>";
 		};
@@ -97,7 +108,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9567A08D2EAA2A0600647832 /* UserNotifications.framework in Frameworks */,
+				9567A0872EAA29E000647832 /* AppsFlyerLib.xcframework in Frameworks */,
+				9567A0802EAA29B500647832 /* FirebaseMessaging.framework in Frameworks */,
 				D8975C01C1ADD4ADE8D699F8 /* Pods_ChickCare.framework in Frameworks */,
+				9567A0842EAA29BA00647832 /* FirebaseCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,7 +134,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9567A08E2EAA2A0D00647832 /* UserNotifications.framework in Frameworks */,
+				9567A07C2EAA298A00647832 /* FirebaseMessaging.framework in Frameworks */,
 				081B65AB739E2A9F4765EC41 /* Pods_ImageNotificationServiceExt.framework in Frameworks */,
+				9567A08A2EAA29EB00647832 /* FirebaseCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -152,6 +170,12 @@
 		8F8BF7842E96AA0E00BFD40F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				9567A08C2EAA2A0600647832 /* UserNotifications.framework */,
+				9567A0892EAA29EB00647832 /* FirebaseCore.framework */,
+				9567A0862EAA29E000647832 /* AppsFlyerLib.xcframework */,
+				9567A0832EAA29BA00647832 /* FirebaseCore.framework */,
+				9567A07F2EAA29B500647832 /* FirebaseMessaging.framework */,
+				9567A07B2EAA298A00647832 /* FirebaseMessaging.framework */,
 				79E92DB3F3141F9B5F6BF2D3 /* Pods_ChickCare.framework */,
 				5986E34E0870B22C02F0412D /* Pods_ImageNotificationServiceExt.framework */,
 			);
@@ -166,7 +190,6 @@
 				40BBCD50E84FA565D05D6C01 /* Pods-ImageNotificationServiceExt.debug.xcconfig */,
 				6254D95BB993F09A273DD76F /* Pods-ImageNotificationServiceExt.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -343,9 +366,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -360,9 +387,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-ChickCare/Pods-ChickCare-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
