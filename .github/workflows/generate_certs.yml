@@ -30,7 +30,7 @@ jobs:
         if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
         run: echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
 
-      - name: Fastlanegenerate
+      - name: Generate certs
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
