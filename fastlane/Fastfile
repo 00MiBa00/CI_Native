@@ -1,7 +1,7 @@
 default_platform(:ios)
 
 platform :ios do
-  # Helper to run match with our common params
+  # Helper: run match with shared params
   private_lane :run_match do |options|
     match(
       type: "appstore",
@@ -16,7 +16,7 @@ platform :ios do
     )
   end
 
-  # Auto-fallback: try readonly first; if not found -> write mode
+  # Certs sync (readonly -> fallback to write)
   lane :ensure_certs do
     setup_ci
 
@@ -39,24 +39,37 @@ platform :ios do
     end
   end
 
-  # Main CI lane: ensures certs (with fallback) -> build -> upload
+  # === UPDATED MAIN LANE ===
   lane :init_ci do
     ensure_certs
 
-    # If your project uses CocoaPods, uncomment next line
+    # Если проект использует CocoaPods, можно включить:
     # cocoapods(silent: true)
 
-    gym(
-      project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
-      scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-      export_method: "app-store",
-      clean: true
-    )
+    # Авто-детект .xcworkspace (Pods) и сборка правильным способом
+    workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
+    if workspace_path
+      UI.message("📦 Detected workspace: #{workspace_path}, building with workspace")
+      gym(
+        workspace: workspace_path,
+        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        export_method: "app-store",
+        clean: true
+      )
+    else
+      UI.message("📁 No .xcworkspace found, building Xcode project")
+      gym(
+        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
+        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        export_method: "app-store",
+        clean: true
+      )
+    end
 
     pilot(skip_waiting_for_build_processing: true)
   end
 
-  # Manual write-only lane (optional) if you want explicit control
+  # Manual write-only lane (optional)
   lane :generate_certs do
     setup_ci
     app_store_connect_api_key(
