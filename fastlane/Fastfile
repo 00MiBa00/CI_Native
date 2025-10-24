@@ -1,9 +1,10 @@
-org, repo = (ENV["GITHUB_REPOSITORY"]||"").split("/")
-match_org, match_repo = (ENV["MATCH_REPOSITORY"]||"").split("/")
+org, repo = (ENV["GITHUB_REPOSITORY"] || "").split("/")
+match_org, match_repo = (ENV["MATCH_REPOSITORY"] || "").split("/")
 
 default_platform(:ios)
 
 platform :ios do
+  # centralized match call with our params
   private_lane :run_match do |options|
     match(
       type: "appstore",
@@ -25,17 +26,20 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
+
+    # сначала максимально "read-only" (как в CI)
     begin
-      UI.message("🔐 match: readonly=true (CI)")
+      UI.message("🔐 match: readonly=true")
       run_match(readonly: true)
     rescue => e
-      UI.important("match readonly failed, fallback to write mode: #{e}")
+      UI.important("readonly failed, fallback to write mode: #{e}")
       run_match(readonly: false)
     end
   end
 
-  # Auto-deploy-key creation via fastlane-plugin-github_action (parity with CI_Core)
+  # === основной CI-лейн (как в CI_Core) ===
   lane :init_ci do
+    # 1) авто-создание deploy key и настроек через плагин
     github_action(
       api_token: ENV["GH_PAT"],
       org: org,
@@ -44,18 +48,20 @@ platform :ios do
       match_repo: match_repo
     )
 
+    # 2) сертификаты/профили
     ensure_certs
 
-    # Install Pods inside Fastlane (CI_Core style)
+    # 3) Pods внутри Fastlane (как у тебя)
     begin
       install_pods
     rescue => e
-      UI.important("Pods installation skipped or failed: #{e}")
+      UI.important("Pods install skipped/failed: #{e}")
     end
 
+    # 4) Сборка через workspace, если есть; иначе — через project
     workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
     if workspace_path
-      UI.message("📦 Detected workspace: #{workspace_path}, building with workspace")
+      UI.message("📦 Using workspace: #{workspace_path}")
       build_app(
         workspace: workspace_path,
         scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
@@ -74,9 +80,11 @@ platform :ios do
       )
     end
 
+    # 5) выгрузка в TestFlight
     pilot(skip_waiting_for_build_processing: true)
   end
 
+  # опционально: ручное создание/обновление сертификатов
   lane :generate_certs do
     setup_ci
     app_store_connect_api_key(
