@@ -1,4 +1,4 @@
-name: Generate iOS Certificates
+name: Generate iOS Certificates (native)
 
 on:
   workflow_dispatch:
@@ -27,10 +27,12 @@ jobs:
           bundle install --jobs 4 --retry 3 --verbose
 
       - name: Disable prompts if deploy key already exists
-        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
-        run: echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.MATCH_DEPLOY_KEY }}" ]; then
+            echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
+          fi
 
-      - name: Generate certs
+      - name: Fastlanegenerate
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
