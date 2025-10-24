@@ -21,6 +21,14 @@ jobs:
           bundle config set without 'development test'
           bundle --version
 
+      # ✅ подмена https->https с PAT для git-зависимостей Bundler
+      - name: Configure git to use GH_PAT for GitHub clones
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global url."https://x-access-token:${GH_PAT}@github.com/".insteadOf "https://github.com/"
+
+      # (опционально) фиксим платформы в lockfile для macOS раннеров
       - name: Add Bundler platforms (macOS runners)
         run: |
           bundle lock --add-platform arm64-darwin-24
@@ -31,8 +39,7 @@ jobs:
         run: |
           bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
 
-      # No manual SSH step: Fastlane plugin will generate and attach deploy key automatically
-
+      # Никаких ручных SSH ключей: Fastlane сам создаст deploy key через плагин
       - name: Build iOS with Fastlane (auto deploy key)
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
