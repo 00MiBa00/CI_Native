@@ -1,4 +1,4 @@
-name: Build iOS (auto cert fallback)
+name: Build iOS
 on: { workflow_dispatch: {} }
 jobs:
   build:
