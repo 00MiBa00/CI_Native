@@ -1,4 +1,4 @@
-name: Build iOS (auto-deploy-key via Fastlane)
+name: Build iOS
 "on": { workflow_dispatch: {} }
 
 jobs:
@@ -21,14 +21,7 @@ jobs:
           bundle config set without 'development test'
           bundle --version
 
-      # ✅ подмена https->https с PAT для git-зависимостей Bundler
-      - name: Configure git to use GH_PAT for GitHub clones
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          git config --global url."https://x-access-token:${GH_PAT}@github.com/".insteadOf "https://github.com/"
-
-      # (опционально) фиксим платформы в lockfile для macOS раннеров
+      # фикс для платформ на macOS-раннерах (как обсуждали)
       - name: Add Bundler platforms (macOS runners)
         run: |
           bundle lock --add-platform arm64-darwin-24
@@ -39,18 +32,22 @@ jobs:
         run: |
           bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
 
-      # Никаких ручных SSH ключей: Fastlane сам создаст deploy key через плагин
+      # НИКАКИХ ручных SSH — deploy key создаст fastlane-plugin-github_action
       - name: Build iOS with Fastlane (auto deploy key)
         env:
+          # App Store Connect (API key)
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
 
-          GH_PAT:              ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+          # GitHub & match
+          GH_PAT:              ${{ secrets.GH_PAT }}                  # токен с правами repo
+          GITHUB_REPOSITORY:   ${{ github.repository }}               # org/repo (текущий)
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}        # org/match-repo
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_BRANCH:    main
 
+          # Xcode target
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
