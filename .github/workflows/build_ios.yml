@@ -1,4 +1,4 @@
-name: Build iOS (Pods + Fastlane)
+name: Build iOS
 "on": { workflow_dispatch: {} }
 
 jobs:
@@ -6,16 +6,16 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 1️⃣ Клонируем репозиторий
+      # 1) Checkout
       - uses: actions/checkout@v4
 
-      # 2️⃣ Устанавливаем Ruby и Bundler
+      # 2) Setup Ruby
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: false
 
-      - name: Prepare bundler (arm64-safe)
+      - name: Prepare bundler
         run: |
           gem install bundler -v 2.7.2
           bundle config set path 'vendor/bundle'
@@ -23,68 +23,46 @@ jobs:
           bundle config set without 'development test'
           bundle --version
 
-      # 3️⃣ Устанавливаем Ruby-зависимости
+      # Optional but fixes arm64-darwin platform lock issues on macOS runners
+      - name: Add Bundler platforms (macOS runners)
+        run: |
+          bundle lock --add-platform arm64-darwin-24
+          bundle lock --add-platform x86_64-darwin-23
+          bundle lock --add-platform ruby || true
+
       - name: Install Ruby gems
         run: |
           bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
 
-      # 4️⃣ Кешируем Pods для ускорения сборки
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cocoapods
-            Pods
-            **/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      # 5️⃣ Устанавливаем зависимости через Podfile
-      - name: Install CocoaPods dependencies
+      # 3) SSH key for match repo (parity with CI_Core which uses deploy key)
+      - name: Setup SSH for match repo
         shell: bash
+        env:
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
         run: |
           set -euo pipefail
-          # Ищем Podfile
-          if [[ -f "Podfile" ]]; then
-            POD_DIR="."
-          elif [[ -f "ios/Podfile" ]]; then
-            POD_DIR="ios"
-          else
-            echo "⚠️ Podfile не найден, пропускаем установку."
-            exit 0
-          fi
-          echo "📦 Используем Podfile в: $POD_DIR"
-          pushd "$POD_DIR" >/dev/null
-          bundle exec pod install --repo-update --verbose
-          popd >/dev/null
+          mkdir -p ~/.ssh
+          echo "${MATCH_DEPLOY_KEY}" > ~/.ssh/match_deploy_key
+          chmod 600 ~/.ssh/match_deploy_key
+          ssh-agent -s > agent.env
+          source agent.env
+          ssh-add ~/.ssh/match_deploy_key
+          printf "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
-      # 6️⃣ Проверяем, что появился .xcworkspace
-      - name: Verify Xcode workspace (after pods)
-        shell: bash
-        run: |
-          set -euo pipefail
-          WS=$(ls -1 *.xcworkspace 2>/dev/null || true)
-          if [[ -z "$WS" ]]; then
-            WS=$(ls -1 ios/*.xcworkspace 2>/dev/null || true)
-          fi
-          if [[ -z "$WS" ]]; then
-            echo "❌ Не найден .xcworkspace — pods не создали воркспейс."
-            exit 1
-          fi
-          echo "✅ Найден workspace:"
-          echo "$WS"
-
-      # 7️⃣ Сборка и публикация через Fastlane
-      - name: Build + Upload (init_ci has fallback inside)
+      # 4) Build & upload via Fastlane (pods handled inside Fastlane as in CI_Core)
+      - name: Build iOS with Fastlane
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          MATCH_GIT_URL:       https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ secrets.MATCH_REPOSITORY }}.git
-          MATCH_GIT_BRANCH:    main
+
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
+
+          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
-        run: bundle exec fastlane ios init_ci
+        run: |
+          bundle exec fastlane ios init_ci
