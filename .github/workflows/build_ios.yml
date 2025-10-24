@@ -1,4 +1,4 @@
-name: Build iOS (native, like CI_Core)
+name: Build iOS (native)
 "on": { workflow_dispatch: {} }
 
 jobs:
@@ -16,15 +16,8 @@ jobs:
         run: |
           gem install bundler -v 2.7.2
           bundle config set path 'vendor/bundle'
-          bundle config set deployment 'true'
           bundle config set without 'development test'
           bundle --version
-
-      - name: Add Bundler platforms (macOS runners)
-        run: |
-          bundle lock --add-platform arm64-darwin-24
-          bundle lock --add-platform x86_64-darwin-23
-          bundle lock --add-platform ruby || true
 
       - name: Install Ruby gems
         run: |
@@ -38,7 +31,7 @@ jobs:
         run: |
           set -euo pipefail
           eval "$(ssh-agent -s)"
-          printf '%s' "${MATCH_DEPLOY_KEY}" | sed 's/\\n/\n/g' | tr -d '\r' | ssh-add -
+          printf '%s' "${MATCH_DEPLOY_KEY}" | sed 's/\n/\n/g' | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
           printf "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 

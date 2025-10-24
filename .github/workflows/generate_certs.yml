@@ -1,8 +1,9 @@
-name: Generate iOS Certs (auto write)
-on: { workflow_dispatch: {} }
+name: Generate iOS Certificates (native)
+"on": { workflow_dispatch: {} }
+
 jobs:
-  certs:
-    runs-on: macos-latest
+  setup:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -11,30 +12,30 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: false
 
-      - name: Prepare bundler (arm64-safe)
+      - name: Prepare bundler
         run: |
           gem install bundler -v 2.7.2
-          bundle config set clean true
-          bundle config set path vendor/bundle
-          bundle config set force_ruby_platform true
-          if [ -f Gemfile.lock ]; then
-            bundle lock --add-platform ruby || true
-            bundle lock --add-platform arm64-darwin-23 || true
-            bundle lock --add-platform x86_64-darwin-23 || true
-          fi
+          bundle config set path 'vendor/bundle'
+          bundle config set without 'development test'
+          bundle --version
 
-      - name: Bundle install (verbose)
+      - name: Install Ruby gems
         run: |
-          set -o pipefail
-          bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
+          bundle install --jobs 4 --retry 3 --verbose
 
-      - name: Generate/Sync certs (fallback inside)
+      - name: Disable prompts if deploy key already exists
+        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
+        run: echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
+
+      - name: Fastlane: generate certs (creates deploy key)
         env:
+          GH_PAT:            ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          MATCH_REPOSITORY:  ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD:    ${{ secrets.MATCH_PASSWORD }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          MATCH_GIT_URL:       https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ secrets.MATCH_REPOSITORY }}.git
-          MATCH_GIT_BRANCH:    main
-          MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
-        run: bundle exec fastlane ios ensure_certs
+          FASTLANE_DISABLE_PROMPTS: ${{ env.FASTLANE_DISABLE_PROMPTS }}
+        run: |
+          bundle exec fastlane ios generate_certs
