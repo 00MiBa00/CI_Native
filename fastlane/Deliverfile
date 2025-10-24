@@ -1,0 +1,2 @@
+app_identifier ENV['IOS_BUNDLE_ID']
+username ENV['APPSTORE_APPLE_ID'] if ENV['APPSTORE_APPLE_ID']

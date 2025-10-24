@@ -1,10 +1,10 @@
-name: Generate iOS Certificates (native)
+name: iOS One-Time Setup (native)
 
 on:
   workflow_dispatch:
 
 jobs:
-  generate:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,13 +25,14 @@ jobs:
         run: |
           bundle install --jobs 4 --retry 3 --verbose
 
-      - name: Fastlanegenerate
+      - name: Fastlane setup_ci_integration (auto creates deploy key)
         env:
+          GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          MATCH_REPOSITORY:  ${{ secrets.MATCH_REPOSITORY }}
-          MATCH_PASSWORD:    ${{ secrets.MATCH_PASSWORD }}
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
-          APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
         run: |
-          bundle exec fastlane ios generate_certs
+          bundle exec fastlane ios setup_ci_integration

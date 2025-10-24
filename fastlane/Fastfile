@@ -1,7 +1,7 @@
+default_platform(:ios)
+
 org, repo = (ENV["GITHUB_REPOSITORY"] || "").split("/")
 match_org, match_repo = (ENV["MATCH_REPOSITORY"] || "").split("/")
-
-default_platform(:ios)
 
 platform :ios do
   private_lane :run_match do |options|
@@ -17,24 +17,8 @@ platform :ios do
     )
   end
 
-  lane :ensure_certs do
-    setup_ci
-    app_store_connect_api_key(
-      key_id: ENV["APPSTORE_KEY_ID"],
-      issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_P8"],
-      is_key_content_base64: false
-    )
-    begin
-      UI.message("🔐 match: readonly=true")
-      run_match(readonly: true)
-    rescue => e
-      UI.important("readonly failed, fallback to write mode: #{e}")
-      run_match(readonly: false)
-    end
-  end
-
-  lane :generate_certs do
+  desc "One-time CI setup (creates deploy key and base config)"
+  lane :setup_ci_integration do
     github_action(
       api_token: ENV["GH_PAT"],
       org: org,
@@ -42,41 +26,44 @@ platform :ios do
       match_org: match_org,
       match_repo: match_repo
     )
-    setup_ci
+
     app_store_connect_api_key(
       key_id: ENV["APPSTORE_KEY_ID"],
       issuer_id: ENV["APPSTORE_ISSUER_ID"],
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
-    run_match(readonly: false)
+
+    setup_ci
   end
 
-  lane :init_ci do
-    ensure_certs
+  desc "Ensure certs/profiles exist (readonly first, fallback to write)"
+  lane :ensure_certs do
+    app_store_connect_api_key(
+      key_id: ENV["APPSTORE_KEY_ID"],
+      issuer_id: ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"],
+      is_key_content_base64: false
+    )
+
     begin
-      install_pods
+      UI.message("🔐 match readonly=true")
+      run_match(readonly: true)
     rescue => e
-      UI.important("Pods install skipped/failed: #{e}")
+      UI.important("readonly failed, fallback to write mode: #{e}")
+      run_match(readonly: false)
     end
-    workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
-    if workspace_path
-      build_app(
-        workspace: workspace_path,
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
-      )
-    else
-      build_app(
-        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
-      )
-    end
-    pilot(skip_waiting_for_build_processing: true)
+  end
+
+  desc "Generate/refresh certs & profiles (write mode)"
+  lane :generate_certs do
+    app_store_connect_api_key(
+      key_id: ENV["APPSTORE_KEY_ID"],
+      issuer_id: ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"],
+      is_key_content_base64: false
+    )
+
+    run_match(readonly: false)
   end
 end
