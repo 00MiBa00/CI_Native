@@ -1,8 +1,10 @@
-name: Build iOS (auto cert fallback)
-on: { workflow_dispatch: {} }
+name: Build iOS (auto-deploy-key via Fastlane)
+"on": { workflow_dispatch: {} }
+
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -11,32 +13,39 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: false
 
-      - name: Prepare bundler (arm64-safe)
+      - name: Prepare bundler
         run: |
           gem install bundler -v 2.7.2
-          bundle config set clean true
-          bundle config set path vendor/bundle
-          bundle config set force_ruby_platform true
-          if [ -f Gemfile.lock ]; then
-            bundle lock --add-platform ruby || true
-            bundle lock --add-platform arm64-darwin-23 || true
-            bundle lock --add-platform x86_64-darwin-23 || true
-          fi
+          bundle config set path 'vendor/bundle'
+          bundle config set deployment 'true'
+          bundle config set without 'development test'
+          bundle --version
 
-      - name: Bundle install (verbose)
+      - name: Add Bundler platforms (macOS runners)
         run: |
-          set -o pipefail
+          bundle lock --add-platform arm64-darwin-24
+          bundle lock --add-platform x86_64-darwin-23
+          bundle lock --add-platform ruby || true
+
+      - name: Install Ruby gems
+        run: |
           bundle install --jobs 4 --retry 3 --verbose | tee bundle_install.log
 
-      - name: Build + Upload (init_ci has fallback inside)
+      # No manual SSH step: Fastlane plugin will generate and attach deploy key automatically
+
+      - name: Build iOS with Fastlane (auto deploy key)
         env:
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          MATCH_GIT_URL:       https://x-access-token:${{ secrets.GH_PAT }}@github.com/${{ secrets.MATCH_REPOSITORY }}.git
-          MATCH_GIT_BRANCH:    main
+
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
+
+          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
-        run: bundle exec fastlane ios init_ci
+        run: |
+          bundle exec fastlane ios init_ci
