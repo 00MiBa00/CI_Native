@@ -29,15 +29,16 @@ jobs:
         if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
         run: echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
 
-      - name: Fastlane
+      - name: Fastlane: generate certs
         env:
-          GH_PAT:            ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          MATCH_REPOSITORY:  ${{ secrets.MATCH_REPOSITORY }}
-          MATCH_PASSWORD:    ${{ secrets.MATCH_PASSWORD }}
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
-          APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
+          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
           FASTLANE_DISABLE_PROMPTS: ${{ env.FASTLANE_DISABLE_PROMPTS }}
         run: |
           bundle exec fastlane ios generate_certs
+
