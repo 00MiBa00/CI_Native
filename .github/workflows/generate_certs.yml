@@ -31,21 +31,21 @@ jobs:
             mkdir -p ~/.ssh
             echo "${{ secrets.MATCH_DEPLOY_KEY }}" > ~/.ssh/match_deploy_key
             chmod 600 ~/.ssh/match_deploy_key
-            cat <<EOF > ~/.ssh/config
-            Host github.com
-              IdentityFile ~/.ssh/match_deploy_key
-              StrictHostKeyChecking no
-            EOF
+            printf "%s\n" \
+              "Host github.com" \
+              "  IdentityFile ~/.ssh/match_deploy_key" \
+              "  StrictHostKeyChecking no" > ~/.ssh/config
+            chmod 600 ~/.ssh/config
           fi
 
-      - name: Fastlanegenerate
+      - name: FastlaneCerf
         env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          MATCH_REPOSITORY:  ${{ secrets.MATCH_REPOSITORY }}
-          MATCH_PASSWORD:    ${{ secrets.MATCH_PASSWORD }}
+          GITHUB_REPOSITORY:  ${{ github.repository }}
+          MATCH_REPOSITORY:   ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD:     ${{ secrets.MATCH_PASSWORD }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
-          APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
+          APPSTORE_KEY_ID:    ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8:        ${{ secrets.APPSTORE_P8 }}
+          IOS_BUNDLE_ID:      ${{ secrets.IOS_BUNDLE_ID }}
         run: |
           bundle exec fastlane ios generate_certs
