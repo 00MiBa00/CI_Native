@@ -10,10 +10,7 @@ platform :ios do
       readonly: options[:readonly],
       git_url: "git@github.com:#{ENV["MATCH_REPOSITORY"]}.git",
       git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
-      app_identifier: [
-        ENV["IOS_BUNDLE_ID"],
-        "#{ENV["IOS_BUNDLE_ID"]}.notifications"
-      ]
+      app_identifier: [ENV["IOS_BUNDLE_ID"], "#{ENV["IOS_BUNDLE_ID"]}.notifications"]
     )
   end
 
@@ -45,9 +42,8 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
-
     begin
-      UI.message("🔐 match readonly=true")
+      UI.message("🔐 match: readonly=true")
       run_match(readonly: true)
     rescue => e
       UI.important("readonly failed, fallback to write mode: #{e}")
@@ -63,7 +59,38 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
-
     run_match(readonly: false)
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :build_ios do
+    ensure_certs
+
+    begin
+      install_pods
+    rescue => e
+      UI.important("Pods install skipped/failed: #{e}")
+    end
+
+    workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
+    if workspace_path
+      build_app(
+        workspace: workspace_path,
+        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        export_method: "app-store",
+        clean: true,
+        xcargs: "-allowProvisioningUpdates"
+      )
+    else
+      build_app(
+        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
+        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        export_method: "app-store",
+        clean: true,
+        xcargs: "-allowProvisioningUpdates"
+      )
+    end
+
+    pilot(skip_waiting_for_build_processing: true)
   end
 end
