@@ -31,11 +31,11 @@ jobs:
             mkdir -p ~/.ssh
             echo "${{ secrets.MATCH_DEPLOY_KEY }}" > ~/.ssh/match_deploy_key
             chmod 600 ~/.ssh/match_deploy_key
-            cat <<EOF > ~/.ssh/config
-            Host github.com
-              IdentityFile ~/.ssh/match_deploy_key
-              StrictHostKeyChecking no
-            EOF
+            printf "%s\n" \
+              "Host github.com" \
+              "  IdentityFile ~/.ssh/match_deploy_key" \
+              "  StrictHostKeyChecking no" > ~/.ssh/config
+            chmod 600 ~/.ssh/config
           fi
 
       - name: Build & Upload (Fastlane)
