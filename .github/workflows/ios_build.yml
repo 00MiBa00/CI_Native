@@ -1,10 +1,12 @@
 name: Build iOS (native)
+
 on:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -13,26 +15,48 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      - name: SSH agent + add MATCH_DEPLOY_KEY (как в CI_Core)
-        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
+      # SSH agent + добавление MATCH_DEPLOY_KEY (как в CI_Core),
+      # условие проверяем в bash, а не в YAML `if`
+      - name: SSH agent + add MATCH_DEPLOY_KEY (CI_Core style)
+        shell: bash
         run: |
-          eval "$(ssh-agent -s)"
-          ssh-add - <<< "${{ secrets.MATCH_DEPLOY_KEY }}"
-          printf "%s\n"             "Host github.com"             "  StrictHostKeyChecking no" >> ~/.ssh/config
+          if [ -n "${{ secrets.MATCH_DEPLOY_KEY }}" ]; then
+            mkdir -p ~/.ssh
+            eval "$(ssh-agent -s)"
+            ssh-add - <<< "${{ secrets.MATCH_DEPLOY_KEY }}"
+            printf "%s\n" \
+              "Host github.com" \
+              "  StrictHostKeyChecking no" >> ~/.ssh/config
+            chmod 600 ~/.ssh/config
+          else
+            echo "No MATCH_DEPLOY_KEY provided; skipping ssh-add"
+          fi
+
+      - name: Bundle install (explicit)
+        shell: bash
+        run: bundle install --jobs 4 --retry 3
 
       - name: Build (нативный)
         env:
+          # App Store Connect
           APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          GH_PAT:              ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+
+          # Match
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}   # org/repo
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
-          MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
+
+          # Project
+          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
           IOS_SCHEME:          ${{ vars.IOS_SCHEME }}
           XCODE_WORKSPACE:     ${{ vars.XCODE_WORKSPACE }}
           PROJECT_NAME:        ${{ vars.PROJECT_NAME }}
+
+          # Прочее
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          FASTLANE_DISABLE_PROMPTS: "1"
+        shell: bash
         run: |
           bundle exec fastlane ios build
