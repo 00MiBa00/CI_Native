@@ -1,96 +1,99 @@
-default_platform(:ios)
-
 org, repo = (ENV["GITHUB_REPOSITORY"] || "").split("/")
 match_org, match_repo = (ENV["MATCH_REPOSITORY"] || "").split("/")
 
+# before_all do
+#   xcversion(version: "16.2.0") # как в CI_Core (закомментировано)
+# end
+
 platform :ios do
-  private_lane :run_match do |options|
+  desc "Один раз: создаёт deploy key и настраивает репы (как в CI_Core)"
+  lane :init_ci do
+    github_action(
+      api_token:  ENV["GH_PAT"],
+      org:        org,
+      repo:       repo,
+      match_org:  match_org,
+      match_repo: match_repo,
+      writable_deploy_key: true   # оставить как было в CI_Core
+    )
+  end
+
+  desc "Синхронизация кодсайн сертификатов и профилей (WRITE, как в CI_Core)"
+  lane :sync_certificates do
+    app_store_connect_api_key(
+      key_id:      ENV["APPSTORE_KEY_ID"],
+      issuer_id:   ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"]
+    )
+
+    main_app_bundle_id = ENV["IOS_BUNDLE_ID"]
+    extension_bundle_id = "#{ENV["IOS_BUNDLE_ID"]}.notifications"
+
     match(
       type: "appstore",
-      readonly: options[:readonly],
-      git_url: "git@github.com:#{ENV["MATCH_REPOSITORY"]}.git",
-      git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
-      app_identifier: [ENV["IOS_BUNDLE_ID"], "#{ENV["IOS_BUNDLE_ID"]}.notifications"]
+      storage_mode: "git",
+      git_url: "git@github.com:#{match_org}/#{match_repo}.git",
+      app_identifier: [main_app_bundle_id, extension_bundle_id],
+      readonly: false
     )
   end
 
-  desc "One-time CI setup (creates deploy key and base config)"
-  lane :setup_ci_integration do
-    github_action(
-      api_token: ENV["GH_PAT"],
-      org: org,
-      repo: repo,
-      match_org: match_org,
-      match_repo: match_repo
-    )
+  desc "Список установленных identity/profiles (диагностика — как в CI_Core)"
+  lane :list_profiles do
+    sh "security find-identity -v -p codesigning"
+  end
 
-    app_store_connect_api_key(
-      key_id: ENV["APPSTORE_KEY_ID"],
-      issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_P8"],
-      is_key_content_base64: false
-    )
+  # ------- НИЖЕ: НАТИВНЫЙ build без Unity --------
 
+  desc "Собрать .ipa (нативный проект; сохранена логика и флаги из CI_Core)"
+  lane :build do
     setup_ci
-  end
+    sync_certificates
+    list_profiles
 
-  desc "Ensure certs/profiles exist (readonly first, fallback to write)"
-  lane :ensure_certs do
-    app_store_connect_api_key(
-      key_id: ENV["APPSTORE_KEY_ID"],
-      issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_P8"],
-      is_key_content_base64: false
-    )
-    begin
-      UI.message("🔐 match: readonly=true")
-      run_match(readonly: true)
-    rescue => e
-      UI.important("readonly failed, fallback to write mode: #{e}")
-      run_match(readonly: false)
-    end
-  end
-
-  desc "Generate/refresh certs & profiles (write mode)"
-  lane :generate_certs do
-    app_store_connect_api_key(
-      key_id: ENV["APPSTORE_KEY_ID"],
-      issuer_id: ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_P8"],
-      is_key_content_base64: false
-    )
-    run_match(readonly: false)
-  end
-
-  desc "Build and upload to TestFlight"
-  lane :build_ios do
-    ensure_certs
-
-    begin
-      install_pods
-    rescue => e
-      UI.important("Pods install skipped/failed: #{e}")
-    end
-
-    workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
-    if workspace_path
+    if ENV["XCODE_WORKSPACE"] && !ENV["XCODE_WORKSPACE"].empty?
       build_app(
-        workspace: workspace_path,
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
+        workspace: ENV["XCODE_WORKSPACE"],
+        scheme:    ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        xcargs:    "-allowProvisioningUpdates",
+        output_directory: "build/iOS/ipa_out",
+        export_options: {
+          method: "app-store",
+          uploadBitcode: false,
+          compileBitcode: false
+        }
       )
     else
       build_app(
-        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
+        project:  ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
+        scheme:   ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+        xcargs:   "-allowProvisioningUpdates",
+        output_directory: "build/iOS/ipa_out",
+        export_options: {
+          method: "app-store",
+          uploadBitcode: false,
+          compileBitcode: false
+        }
       )
     end
+  end
 
-    pilot(skip_waiting_for_build_processing: true)
+  desc "Release (как в CI_Core, только без Unity): build + deliver"
+  lane :release do
+    build
+    deliver
+    upload_to_app_store(
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      skip_screenshots: true,
+      run_precheck_before_submit: false
+    )
+  end
+
+  desc "Beta/TestFlight (оставлено как в CI_Core, но без правок plist под Unity)"
+  lane :beta do
+    build
+    upload_to_testflight(skip_waiting_for_build_processing: true)
   end
 end

@@ -1,2 +1,9 @@
-apple_id ENV['APPSTORE_APPLE_ID'] if ENV['APPSTORE_APPLE_ID']
-itc_team_id ENV['APPSTORE_TEAM_ID'] if ENV['APPSTORE_TEAM_ID']
+for_platform :ios do
+  app_identifier(ENV['IOS_BUNDLE_ID'])
+
+  apple_dev_portal_id(ENV['APPLE_DEVELOPER_EMAIL'])
+  itunes_connect_id(ENV['APPLE_CONNECT_EMAIL'])
+
+  team_id(ENV['APPLE_TEAM_ID'])
+  itc_team_id(ENV['APPLE_TEAM_ID'])
+end

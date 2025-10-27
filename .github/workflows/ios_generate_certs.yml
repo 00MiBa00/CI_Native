@@ -1,0 +1,40 @@
+name: Generate iOS Certificates (native)
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+
+      - name: SSH agent + add MATCH_DEPLOY_KEY (как в CI_Core)
+        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.MATCH_DEPLOY_KEY }}"
+          printf "%s\n"             "Host github.com"             "  StrictHostKeyChecking no" >> ~/.ssh/config
+
+      - name: Configure git identity for match commits
+        run: |
+          git config --global user.name "ci-bot"
+          git config --global user.email "ci-bot@local"
+
+      - name: Sync certificates (WRITE)
+        env:
+          APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
+          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
+          MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
+        run: |
+          bundle exec fastlane ios sync_certificates

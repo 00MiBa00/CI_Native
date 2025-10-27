@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
-gem "fastlane", "~> 2.228"
-gem "cocoapods", "~> 1.15"
+gem "fastlane"
 gem "xcode-install"
-gem "fastlane-plugin-github_action", "~> 1.0"
+gem "cocoapods", "~> 1.15.2"
+# тот же плагин из git, как в CI_Core
+gem "fastlane-plugin-github_action", git: "https://github.com/joshdholtz/fastlane-plugin-github_action"
