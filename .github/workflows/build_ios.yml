@@ -51,5 +51,6 @@ jobs:
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
           # ВАЖНО: build работает ТОЛЬКО в readonly (не создаёт новые сертификаты)
           #STRICT_CERTS:        "1"
+          SIGNING_CERT: "Apple Distribution"
         run: |
           bundle exec fastlane ios build_ios
