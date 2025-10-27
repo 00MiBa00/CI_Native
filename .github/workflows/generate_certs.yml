@@ -45,6 +45,11 @@ jobs:
             chmod 600 ~/.ssh/config
           fi
 
+      - name: Configure git identity (required for match)
+        run: |
+          git config --global user.name  "ci-bot"
+          git config --global user.email "ci-bot@local"
+
       - name: Fastlanegenerate
         env:
           GH_PAT:              ${{ secrets.GH_PAT }}
