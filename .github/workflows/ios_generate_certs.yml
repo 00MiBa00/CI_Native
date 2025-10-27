@@ -5,6 +5,8 @@ on:
 jobs:
   generate:
     runs-on: macos-latest
+    env:
+      MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -14,11 +16,13 @@ jobs:
           bundler-cache: true
 
       - name: SSH agent + add MATCH_DEPLOY_KEY (как в CI_Core)
-        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
+        if: ${{ env.MATCH_DEPLOY_KEY != '' }}
         run: |
           eval "$(ssh-agent -s)"
-          ssh-add - <<< "${{ secrets.MATCH_DEPLOY_KEY }}"
-          printf "%s\n"             "Host github.com"             "  StrictHostKeyChecking no" >> ~/.ssh/config
+          ssh-add - <<< "${{ env.MATCH_DEPLOY_KEY }}"
+          printf "%s\n" \
+            "Host github.com" \
+            "  StrictHostKeyChecking no" >> ~/.ssh/config
 
       - name: Configure git identity for match commits
         run: |
