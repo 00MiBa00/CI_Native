@@ -34,7 +34,10 @@ platform :ios do
     setup_ci
   end
 
-  desc "Ensure certs/profiles exist (readonly first, fallback to write)"
+  # Важно: делаем поведение переключаемым.
+  # STRICT_CERTS=1 -> только readonly (build не создаёт новые сертификаты)
+  # иначе -> как в CI_Core (readonly, при ошибке fallback в write)
+  desc "Ensure certs/profiles exist"
   lane :ensure_certs do
     app_store_connect_api_key(
       key_id: ENV["APPSTORE_KEY_ID"],
@@ -42,12 +45,18 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"],
       is_key_content_base64: false
     )
-    begin
-      UI.message("🔐 match: readonly=true")
+
+    if ENV["STRICT_CERTS"] == "1"
+      UI.message("🔐 match: readonly=true (STRICT)")
       run_match(readonly: true)
-    rescue => e
-      UI.important("readonly failed, fallback to write mode: #{e}")
-      run_match(readonly: false)
+    else
+      begin
+        UI.message("🔐 match: readonly=true")
+        run_match(readonly: true)
+      rescue => e
+        UI.important("readonly failed, fallback to write mode: #{e}")
+        run_match(readonly: false)
+      end
     end
   end
 
@@ -72,23 +81,28 @@ platform :ios do
       UI.important("Pods install skipped/failed: #{e}")
     end
 
+    # Берём карту профилей, которые поставил match, и отдаём её gym.
+    profiles = lane_context[:MATCH_PROVISIONING_PROFILE_MAPPING] || {}
+    UI.message("Using provisioning profiles: #{profiles}")
+
     workspace_path = Dir["*.xcworkspace", "ios/*.xcworkspace"].first
+    build_params = {
+      scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
+      export_method: "app-store",
+      clean: true,
+      xcargs: "-allowProvisioningUpdates",
+      export_options: {
+        signingStyle: "manual",
+        provisioningProfiles: profiles
+      }
+    }
+
     if workspace_path
-      build_app(
-        workspace: workspace_path,
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
-      )
+      build_app(build_params.merge(workspace: workspace_path))
     else
-      build_app(
-        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj",
-        scheme: ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"],
-        export_method: "app-store",
-        clean: true,
-        xcargs: "-allowProvisioningUpdates"
-      )
+      build_app(build_params.merge(
+        project: ENV["XCODE_PROJECT"] || "#{ENV["PROJECT_NAME"]}.xcodeproj"
+      ))
     end
 
     pilot(skip_waiting_for_build_processing: true)
