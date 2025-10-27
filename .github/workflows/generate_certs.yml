@@ -1,11 +1,11 @@
-name: Generate iOS Certificates (native)
+name: Generate iOS Certificates
 
 on:
   workflow_dispatch:
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
+  generate:
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -13,54 +13,29 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: false
+          bundler-cache: true
 
-      - name: Prepare bundler
+      - name: Configure SSH for match
         run: |
-          gem install bundler -v 2.7.2
-          bundle config set path 'vendor/bundle'
-          bundle config set without 'development test'
-          bundle --version
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MATCH_DEPLOY_KEY }}" > ~/.ssh/match_deploy_key
+          chmod 600 ~/.ssh/match_deploy_key
+          printf "%s\n" \
+            "Host github.com" \
+            "  IdentityFile ~/.ssh/match_deploy_key" \
+            "  StrictHostKeyChecking no" > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
-      - name: Install Ruby gems
-        run: |
-          bundle install --jobs 4 --retry 3 --verbose
-
-      - name: Disable prompts if deploy key already exists
-        run: |
-          if [ -n "${{ secrets.MATCH_DEPLOY_KEY }}" ]; then
-            echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
-          fi
-
-      - name: Configure SSH for match (if key present)
-        run: |
-          if [ -n "${{ secrets.MATCH_DEPLOY_KEY }}" ]; then
-            mkdir -p ~/.ssh
-            echo "${{ secrets.MATCH_DEPLOY_KEY }}" > ~/.ssh/match_deploy_key
-            chmod 600 ~/.ssh/match_deploy_key
-            printf "%s\n" \
-              "Host github.com" \
-              "  IdentityFile ~/.ssh/match_deploy_key" \
-              "  StrictHostKeyChecking no" > ~/.ssh/config
-            chmod 600 ~/.ssh/config
-          fi
-
-      - name: Configure git identity (required for match)
-        run: |
-          git config --global user.name  "ci-bot"
-          git config --global user.email "ci-bot@local"
-
-      - name: Fastlanegenerate
+      - name: Run Fastlane generate_certs
         env:
-          GH_PAT:              ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
-          MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
           APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          FASTLANE_DISABLE_PROMPTS: ${{ env.FASTLANE_DISABLE_PROMPTS }}
-          SIGNING_CERT:        "Apple Distribution"
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
         run: |
+          bundle install
           bundle exec fastlane ios generate_certs
