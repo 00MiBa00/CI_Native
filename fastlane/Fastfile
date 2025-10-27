@@ -10,7 +10,8 @@ platform :ios do
       readonly: options[:readonly],
       git_url: "git@github.com:#{ENV["MATCH_REPOSITORY"]}.git",
       git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
-      app_identifier: [ENV["IOS_BUNDLE_ID"], "#{ENV["IOS_BUNDLE_ID"]}.notifications"]
+      app_identifier: [ENV["IOS_BUNDLE_ID"], "#{ENV["IOS_BUNDLE_ID"]}.notifications"],
+      generate_apple_certs: true
     )
   end
 
