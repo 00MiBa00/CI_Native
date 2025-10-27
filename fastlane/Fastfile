@@ -12,6 +12,8 @@ platform :ios do
       git_branch: ENV["MATCH_GIT_BRANCH"] || "main",
       app_identifier: app_ids,
       generate_apple_certs: true
+      git_full_name:  ENV["GIT_FULL_NAME"]  || "ci-bot",
+      git_user_email: ENV["GIT_USER_EMAIL"] || "ci-bot@local"
     )
   end
 
