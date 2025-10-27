@@ -38,7 +38,7 @@ jobs:
             chmod 600 ~/.ssh/config
           fi
 
-      - name: FastlaneCerf
+      - name: FastlaneGenerate
         env:
           GITHUB_REPOSITORY:  ${{ github.repository }}
           MATCH_REPOSITORY:   ${{ secrets.MATCH_REPOSITORY }}
