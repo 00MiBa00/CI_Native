@@ -49,5 +49,7 @@ jobs:
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}
           IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}
+          # ВАЖНО: build работает ТОЛЬКО в readonly (не создаёт новые сертификаты)
+          STRICT_CERTS:        "1"
         run: |
           bundle exec fastlane ios build_ios
