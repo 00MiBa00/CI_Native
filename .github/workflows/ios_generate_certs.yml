@@ -6,7 +6,7 @@ jobs:
   generate:
     runs-on: macos-latest
     env:
-      MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+      MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}  # как в CI_Core
     steps:
       - uses: actions/checkout@v4
 
@@ -17,28 +17,20 @@ jobs:
 
       - name: SSH agent + add MATCH_DEPLOY_KEY (как в CI_Core)
         if: ${{ env.MATCH_DEPLOY_KEY != '' }}
+        shell: bash
         run: |
           eval "$(ssh-agent -s)"
-          ssh-add - <<< "${{ env.MATCH_DEPLOY_KEY }}"
-          printf "%s\n" \
-            "Host github.com" \
-            "  StrictHostKeyChecking no" >> ~/.ssh/config
+          ssh-add - <<< "${MATCH_DEPLOY_KEY}"
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Configure git identity for match commits
-        run: |
-          git config --global user.name "ci-bot"
-          git config --global user.email "ci-bot@local"
-
-      - name: Sync certificates (WRITE)
+      - name: Fastlane
         env:
           APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
-          GH_PAT:              ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}   # org/repo
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
-          MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
         run: |
           bundle exec fastlane ios sync_certificates
