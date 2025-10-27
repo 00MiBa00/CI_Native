@@ -1,39 +1,24 @@
-name: iOS One-Time Setup (native)
+name: iOS One-Time Setup
 
 on:
   workflow_dispatch:
 
 jobs:
   setup:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
-          bundler-cache: false
+          ruby-version: 3.2
+          bundler-cache: true
 
-      - name: Prepare bundler
-        run: |
-          gem install bundler -v 2.7.2
-          bundle config set path 'vendor/bundle'
-          bundle config set without 'development test'
-          bundle --version
-
-      - name: Install Ruby gems
-        run: |
-          bundle install --jobs 4 --retry 3 --verbose
-
-      - name: Fastlane setup_ci_integration (auto creates deploy key)
+      - name: Run Fastlane init_ci
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
-          APPSTORE_P8: ${{ secrets.APPSTORE_P8 }}
-          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
         run: |
-          bundle exec fastlane ios setup_ci_integration
+          bundle install
+          bundle exec fastlane ios init_ci
