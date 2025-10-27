@@ -27,8 +27,10 @@ jobs:
           bundle install --jobs 4 --retry 3 --verbose
 
       - name: Disable prompts if deploy key already exists
-        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
-        run: echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
+        run: |
+          if [ -n "${{ secrets.MATCH_DEPLOY_KEY }}" ]; then
+            echo "FASTLANE_DISABLE_PROMPTS=1" >> $GITHUB_ENV
+          fi
 
       - name: Configure SSH for match (if key present)
         run: |
@@ -53,6 +55,6 @@ jobs:
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
           FASTLANE_DISABLE_PROMPTS: ${{ env.FASTLANE_DISABLE_PROMPTS }}
-          SIGNING_CERT:       "Apple Distribution"
+          SIGNING_CERT:        "Apple Distribution"
         run: |
           bundle exec fastlane ios generate_certs
