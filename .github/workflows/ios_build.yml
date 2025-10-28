@@ -73,6 +73,7 @@ jobs:
           PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}     # напр. ChickCare
           # XCODE_WORKSPACE:   ${{ secrets.XCODE_WORKSPACE }}  # если нужно указать явно, напр. ChickCare.xcworkspace
           # XCODE_PROJECT:     ${{ secrets.XCODE_PROJECT }}    # если нужно указать явно, напр. ChickCare.xcodeproj
+          BUILD_NUMBER:        ${{ github.run_number }}
 
           # Автор для коммитов в match
           GIT_FULL_NAME:       ci-bot
