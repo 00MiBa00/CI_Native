@@ -8,59 +8,95 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: ruby/setup-ruby@v1
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
 
-      # Добавляем MATCH_DEPLOY_KEY в ssh-agent (как в CI_Core)
-      - name: Setup SSH for match (agent + known_hosts)
-        if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
+      # SSH для доступа к match-репозиторию (как в CI_Core), проверка внутри bash
+      - name: Setup SSH for match (CI_Core style)
         env:
-          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
-          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}   # приватный ключ OpenSSH
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}   # формат: org/repo
         shell: bash
         run: |
           set -euo pipefail
 
-          echo "→ Setting up SSH agent and key"
+          if [ -z "${MATCH_DEPLOY_KEY:-}" ]; then
+            echo "⚠️  MATCH_DEPLOY_KEY is empty, skipping SSH setup"
+            exit 0
+          fi
+
+          echo "→ Starting ssh-agent and adding deploy key"
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${MATCH_DEPLOY_KEY}"
 
-          # Конфиг для known_hosts
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+
+          # Сохраняем ключ как файл (для IdentityFile)
+          umask 177
+          echo "${MATCH_DEPLOY_KEY}" > ~/.ssh/id_match
+          chmod 600 ~/.ssh/id_match
+
+          # Конфиг под github.com
+          {
+            echo "Host github.com"
+            echo "  HostName github.com"
+            echo "  IdentityFile ~/.ssh/id_match"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking accept-new"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+          # known_hosts на всякий случай
           ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
           chmod 600 ~/.ssh/known_hosts
 
-          echo "→ Testing SSH access to git@github.com:${MATCH_REPOSITORY}.git"
-          git ls-remote "git@github.com:${MATCH_REPOSITORY}.git" > /dev/null \
-            && echo "✅ SSH access OK" \
-            || echo "⚠️  SSH access check failed (verify deploy key permissions)"
+          # Быстрый self-check доступа к match-репозиторию
+          if [ -n "${MATCH_REPOSITORY:-}" ]; then
+            echo "Checking SSH access to git@github.com:${MATCH_REPOSITORY}.git"
+            if git ls-remote "git@github.com:${MATCH_REPOSITORY}.git" > /dev/null 2>&1; then
+              echo "✅ SSH access to match repo is OK"
+            else
+              echo "⚠️  SSH access check failed (will let fastlane/match try as well)"
+            fi
+          fi
 
       - name: Build (нативный через Fastlane)
         env:
+          # App Store Connect (API key)
           APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
 
+          # Bundle ID(ы)
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
 
+          # GitHub / match
           GH_PAT:              ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}   # org/repo
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
           MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
 
+          # Параметры сборки проекта
           IOS_SCHEME:          ${{ vars.IOS_SCHEME }}
           XCODE_WORKSPACE:     ${{ vars.XCODE_WORKSPACE }}
           PROJECT_NAME:        ${{ vars.PROJECT_NAME }}
 
-          # Git identity (как в CI_Core)
+          # Для коммитов в match при необходимости (как в CI_Core)
           GIT_FULL_NAME:       ci-bot
           GIT_USER_EMAIL:      ci-bot@local
+        shell: bash
         run: |
-          echo "→ Starting Fastlane build"
+          # (опционально) настроим git identity, если понадобится write в match
+          git config --global user.name  "${GIT_FULL_NAME}"
+          git config --global user.email "${GIT_USER_EMAIL}"
+
+          # Запуск Fastlane
           bundle exec fastlane ios build
