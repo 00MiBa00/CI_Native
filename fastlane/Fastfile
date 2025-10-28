@@ -24,7 +24,7 @@ platform :ios do
       key_content: ENV["APPSTORE_P8"]
     )
 
-    main_app_bundle_id = ENV["IOS_BUNDLE_ID"]
+    main_app_bundle_id  = ENV["IOS_BUNDLE_ID"]
     extension_bundle_id = "#{ENV["IOS_BUNDLE_ID"]}.notifications"
 
     match(
@@ -42,52 +42,52 @@ platform :ios do
     # 1️⃣ подтянуть кодсайнинг
     sync_certificates
 
-    # 2️⃣ подготовить параметры окружения
-    scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
-    workspace_input = (ENV["XCODE_WORKSPACE"] || "").strip
-    project_input   = (ENV["XCODE_PROJECT"] || "").strip
-    project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
+    # 2️⃣ перейти в корень репозитория на раннере,
+    #    чтобы поиск *.xcworkspace/*.xcodeproj работал корректно
+    Dir.chdir(ENV["GITHUB_WORKSPACE"] || ".") do
+      UI.message("📂 PWD: #{Dir.pwd}")
+      UI.message("📄 Root files: #{Dir['*'].join(', ')}")
 
-    # 3️⃣ определяем реальный workspace/project
-    workspace = nil
-    project   = nil
+      # 3️⃣ подготовить параметры окружения
+      scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
+      workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
+      project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
+      project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-    if !workspace_input.empty? && File.exist?(workspace_input)
-      workspace = workspace_input
-    elsif !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
-      project = project_input
-    else
-      # авто-поиск (если переменные не заданы)
-      found_ws = Dir["*.xcworkspace"].first
-      found_pr = Dir["*.xcodeproj"].first
-      if found_ws
-        workspace = found_ws
-      elsif found_pr
-        project = found_pr
+      # 4️⃣ определить workspace/project
+      workspace = if !workspace_input.empty? && File.exist?(workspace_input)
+                    workspace_input
+                  else
+                    Dir["*.xcworkspace"].first
+                  end
+
+      project = if !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
+                  project_input
+                else
+                  Dir["*.xcodeproj"].first
+                end
+
+      # 5️⃣ валидация
+      UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
+      UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
+
+      UI.message("➡️  Using scheme: #{scheme}")
+      UI.message("➡️  Using workspace: #{workspace}") if workspace
+      UI.message("➡️  Using project:   #{project}")   if project
+
+      # 6️⃣ сборка
+      common = {
+        scheme: scheme,
+        export_method: "app-store",
+        xcargs: "-allowProvisioningUpdates",
+        output_directory: "build/iOS/ipa_out"
+      }
+
+      if workspace
+        build_app(common.merge(workspace: workspace))
+      else
+        build_app(common.merge(project: project))
       end
-    end
-
-    # 4️⃣ защита от пустых значений
-    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
-    UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
-
-    UI.message("➡️  Using scheme: #{scheme}")
-    UI.message("➡️  Using workspace: #{workspace}") if workspace
-    UI.message("➡️  Using project:   #{project}")   if project
-
-    # 5️⃣ параметры для build_app
-    build_params = {
-      scheme: scheme,
-      export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates",
-      output_directory: "build/iOS/ipa_out"
-    }
-
-    # 6️⃣ сборка
-    if workspace
-      build_app(build_params.merge(workspace: workspace))
-    else
-      build_app(build_params.merge(project: project))
     end
   end
 end
