@@ -1,7 +1,10 @@
+# fastlane/Fastfile
+
 org, repo             = (ENV["GITHUB_REPOSITORY"] || "").split("/")
 match_org, match_repo = (ENV["MATCH_REPOSITORY"]  || "").split("/")
 
 platform :ios do
+  # == One-time: создать writable deploy key в match-репо (как в CI_Core)
   desc "Initialize CI with writable deploy key (one-time)"
   lane :init_ci do
     github_action(
@@ -14,6 +17,7 @@ platform :ios do
     )
   end
 
+  # == Синхронизация кодсайна (WRITE) — как в CI_Core
   desc "Sync codesigning certificates (WRITE), как в CI_Core"
   lane :sync_certificates do
     app_store_connect_api_key(
@@ -34,23 +38,26 @@ platform :ios do
     )
   end
 
+  # == Сборка .ipa для App Store (нативка)
   desc "Build .ipa for App Store (native)"
   lane :build do
+    # 1) подтянуть кодсайнинг
     sync_certificates
 
+    # 2) подготовить параметры окружения
     scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
     workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
     project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
     project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-    # 1) корень репозитория (Fastfile лежит в fastlane/, уходим на уровень вверх)
+    # 3) корень репозитория (Fastfile лежит в fastlane/, уходим на уровень вверх)
     repo_root = File.expand_path("..", __dir__)
 
-    # 2) абсолютные пути
+    # 4) абсолютные пути
     workspace_path = workspace_input.empty? ? nil : File.expand_path(workspace_input, repo_root)
     project_path   = project_input.empty?   ? nil : File.expand_path(project_input,   repo_root)
 
-    # 3) авто-поиск, если не передали переменные
+    # 5) авто-поиск, если не передали переменные
     if workspace_path.nil? && project_path.nil?
       found_ws = Dir[File.join(repo_root, "*.xcworkspace")].first
       found_pr = Dir[File.join(repo_root, "*.xcodeproj")].first
@@ -58,7 +65,7 @@ platform :ios do
       project_path   = found_pr if found_pr
     end
 
-    # 4) проверки и лог
+    # 6) проверки и лог
     UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace_path.nil? && project_path.nil?
     UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
 
@@ -69,6 +76,7 @@ platform :ios do
     UI.message "🧩 workspace exists? #{File.exist?(workspace_path)}" if workspace_path
     UI.message "🧩 project exists?   #{File.exist?(project_path)}"   if project_path
 
+    # 7) общие параметры для build_app
     common = {
       scheme: scheme,
       export_method: "app-store",
@@ -76,9 +84,11 @@ platform :ios do
       output_directory: File.join(repo_root, "build/iOS/ipa_out")
     }
 
+    # 8) сборка
     if workspace_path
       build_app(common.merge(workspace: workspace_path))
     else
       build_app(common.merge(project: project_path))
     end
   end
+end
