@@ -73,14 +73,12 @@ platform :ios do
     main_profile  = ENV["sigh_#{main_bundle}_appstore_profile-name"]
     ext_profile   = ENV["sigh_#{ext_bundle}_appstore_profile-name"]
 
-    # Имя таргета основной аппки (по умолчанию = схема)
-    main_target = ENV["IOS_MAIN_TARGET"].to_s.empty? ? scheme : ENV["IOS_MAIN_TARGET"]
-    # Имя таргета экстеншена (замени, если другое)
+    main_target  = ENV["IOS_MAIN_TARGET"].to_s.empty? ? scheme : ENV["IOS_MAIN_TARGET"]
     notif_target = ENV["IOS_NOTIF_TARGET"].to_s.empty? ? "ImageNotificationServiceExt" : ENV["IOS_NOTIF_TARGET"]
 
     project_or_workspace_path = project_path || workspace_path
 
-    # MAIN APP -> manual + конкретный профиль
+    # MAIN APP
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: main_team_id,
@@ -90,7 +88,7 @@ platform :ios do
       profile_name: main_profile
     )
 
-    # NOTIFICATION EXT -> manual + свой профиль
+    # NOTIFICATION EXTENSION
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: main_team_id,
@@ -100,17 +98,19 @@ platform :ios do
       profile_name: ext_profile
     )
 
-    # Закрепляем профили на экспорт, чтобы -exportArchive не тянул старые
+    # 8️⃣ Экспорт профилей для .ipa
     provisioning_profiles = {}
     provisioning_profiles[main_bundle] = main_profile if main_bundle && main_profile
     provisioning_profiles[ext_bundle]  = ext_profile  if ext_bundle  && ext_profile
+
+    ipa_output_dir = File.join(repo_root, "build/iOS/ipa_out")
 
     common = {
       scheme: scheme,
       export_method: "app-store",
       export_team_id: main_team_id,
       xcargs: "DEVELOPMENT_TEAM=#{main_team_id} CODE_SIGN_IDENTITY='Apple Distribution'",
-      output_directory: File.join(repo_root, "build/iOS/ipa_out"),
+      output_directory: ipa_output_dir,
       export_options: {
         method: "app-store",
         provisioningProfiles: provisioning_profiles
@@ -122,5 +122,25 @@ platform :ios do
     else
       build_app(common.merge(project: project_path))
     end
+
+    # 🚀 10) Загрузка в App Store Connect / TestFlight
+    ipa_path = Dir[File.join(ipa_output_dir, "*.ipa")].first
+    UI.message "📦 IPA для загрузки: #{ipa_path}"
+
+    upload_to_app_store(
+      ipa: ipa_path,
+      skip_screenshots: true,
+      skip_metadata: true,
+      submit_for_review: false,   # отключено, чтобы не автопубликовать
+      dev_portal_team_id: main_team_id,
+      app_identifier: main_bundle,
+      api_key: {
+        key_id: ENV["APPSTORE_KEY_ID"],
+        issuer_id: ENV["APPSTORE_ISSUER_ID"],
+        key_content: ENV["APPSTORE_P8"]
+      }
+    )
+
+    UI.success("🎉 Build успешно загружен в App Store Connect (TestFlight)!")
   end
 end
