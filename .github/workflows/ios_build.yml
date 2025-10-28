@@ -45,18 +45,11 @@ jobs:
 
           ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Debug Xcode structure
-        shell: bash
+      - name: Dump full repo tree (no limits)
         run: |
-          echo "PWD: $(pwd)"
-          echo "== Top level =="
-          ls -la
-          echo
-          echo "== Find Xcode workspaces =="
-          find . -name "*.xcworkspace" -maxdepth 3 -print
-          echo
-          echo "== Find Xcode projects =="
-          find . -name "*.xcodeproj" -maxdepth 3 -print
+          echo "::group::Repository tree"
+          find . -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'
+          echo "::endgroup::"
 
       - name: Build (нативный через Fastlane)
         env:
