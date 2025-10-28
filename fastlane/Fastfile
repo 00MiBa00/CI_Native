@@ -39,53 +39,46 @@ platform :ios do
     sync_certificates
 
     scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
-    workspace_input = (ENV["XCODE_WORKSPACE"] || "").strip
-    project_input   = (ENV["XCODE_PROJECT"]   || "").strip
+    workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
+    project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
     project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-    # авто-определение
-    workspace = nil
-    project   = nil
-    if !workspace_input.empty? && File.exist?(workspace_input)
-      workspace = workspace_input
-    elsif !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
-      project = project_input
-    else
-      # ищем в корне
-      found_ws = Dir["*.xcworkspace"].first
-      found_pr = Dir["*.xcodeproj"].first
-      workspace = found_ws if found_ws
-      project   = found_pr if found_pr
+    # 1) корень репозитория (Fastfile лежит в fastlane/, уходим на уровень вверх)
+    repo_root = File.expand_path("..", __dir__)
+
+    # 2) абсолютные пути
+    workspace_path = workspace_input.empty? ? nil : File.expand_path(workspace_input, repo_root)
+    project_path   = project_input.empty?   ? nil : File.expand_path(project_input,   repo_root)
+
+    # 3) авто-поиск, если не передали переменные
+    if workspace_path.nil? && project_path.nil?
+      found_ws = Dir[File.join(repo_root, "*.xcworkspace")].first
+      found_pr = Dir[File.join(repo_root, "*.xcodeproj")].first
+      workspace_path = found_ws if found_ws
+      project_path   = found_pr if found_pr
     end
 
-    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
+    # 4) проверки и лог
+    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace_path.nil? && project_path.nil?
     UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
 
-    UI.message("📂 PWD: #{Dir.pwd}")
-    UI.message("➡️  Using scheme: #{scheme}")
-    UI.message("➡️  Using workspace: #{workspace}") if workspace
-    UI.message("➡️  Using project:   #{project}")   if project
-
-    # Если есть Podfile — поставим поды
-    if File.exist?("Podfile")
-      cocoapods(
-        clean: true,
-        repo_update: true,
-        use_bundle_exec: false
-      )
-    end
+    UI.message "📂 repo_root: #{repo_root}"
+    UI.message "➡️  Using scheme: #{scheme}"
+    UI.message "➡️  Using workspace: #{workspace_path}" if workspace_path
+    UI.message "➡️  Using project:   #{project_path}"   if project_path
+    UI.message "🧩 workspace exists? #{File.exist?(workspace_path)}" if workspace_path
+    UI.message "🧩 project exists?   #{File.exist?(project_path)}"   if project_path
 
     common = {
       scheme: scheme,
       export_method: "app-store",
       xcargs: "-allowProvisioningUpdates",
-      output_directory: "build/iOS/ipa_out"
+      output_directory: File.join(repo_root, "build/iOS/ipa_out")
     }
 
-    if workspace
-      build_app(common.merge(workspace: workspace))
+    if workspace_path
+      build_app(common.merge(workspace: workspace_path))
     else
-      build_app(common.merge(project: project))
+      build_app(common.merge(project: project_path))
     end
   end
-end
