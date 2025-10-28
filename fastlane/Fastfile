@@ -36,35 +36,58 @@ platform :ios do
     )
   end
 
-  # == Сборка .ipa для App Store (нативка, без Unity)
+  # == Сборка .ipa для App Store (нативка)
   desc "Build .ipa for App Store (native)"
   lane :build do
-    # 1) подтянуть кодсайнинг (поведение CI_Core)
+    # 1️⃣ подтянуть кодсайнинг
     sync_certificates
 
-    # 2) параметры для сборки — берём из env (как у вас в workflow)
-    scheme    = ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]
-    workspace = ENV["XCODE_WORKSPACE"].to_s.strip
-    project   = ENV["XCODE_PROJECT"].to_s.strip
-    project   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project.empty? && !ENV["PROJECT_NAME"].to_s.empty?
+    # 2️⃣ подготовить параметры окружения
+    scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
+    workspace_input = (ENV["XCODE_WORKSPACE"] || "").strip
+    project_input   = (ENV["XCODE_PROJECT"] || "").strip
+    project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-    # 3) сборка
-    if !workspace.empty?
-      build_app(
-        workspace: workspace,
-        scheme: scheme,
-        export_method: "app-store",
-        xcargs: "-allowProvisioningUpdates",
-        output_directory: "build/iOS/ipa_out"
-      )
+    # 3️⃣ определяем реальный workspace/project
+    workspace = nil
+    project   = nil
+
+    if !workspace_input.empty? && File.exist?(workspace_input)
+      workspace = workspace_input
+    elsif !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
+      project = project_input
     else
-      build_app(
-        project: project,
-        scheme: scheme,
-        export_method: "app-store",
-        xcargs: "-allowProvisioningUpdates",
-        output_directory: "build/iOS/ipa_out"
-      )
+      # авто-поиск (если переменные не заданы)
+      found_ws = Dir["*.xcworkspace"].first
+      found_pr = Dir["*.xcodeproj"].first
+      if found_ws
+        workspace = found_ws
+      elsif found_pr
+        project = found_pr
+      end
+    end
+
+    # 4️⃣ защита от пустых значений
+    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
+    UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
+
+    UI.message("➡️  Using scheme: #{scheme}")
+    UI.message("➡️  Using workspace: #{workspace}") if workspace
+    UI.message("➡️  Using project:   #{project}")   if project
+
+    # 5️⃣ параметры для build_app
+    build_params = {
+      scheme: scheme,
+      export_method: "app-store",
+      xcargs: "-allowProvisioningUpdates",
+      output_directory: "build/iOS/ipa_out"
+    }
+
+    # 6️⃣ сборка
+    if workspace
+      build_app(build_params.merge(workspace: workspace))
+    else
+      build_app(build_params.merge(project: project))
     end
   end
 end
