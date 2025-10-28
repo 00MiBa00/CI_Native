@@ -1,5 +1,3 @@
-# fastlane/Fastfile
-
 org, repo             = (ENV["GITHUB_REPOSITORY"] || "").split("/")
 match_org, match_repo = (ENV["MATCH_REPOSITORY"]  || "").split("/")
 
@@ -65,7 +63,6 @@ platform :ios do
     UI.message "➡️  Using workspace: #{workspace_path}" if workspace_path
     UI.message "➡️  Using project:   #{project_path}"   if project_path
 
-    # === ЯВНАЯ настройка подписи ДЛЯ ОБОИХ ТАРГЕТОВ ===
     main_bundle = ENV["IOS_BUNDLE_ID"]
     ext_bundle  = "#{main_bundle}.notifications"
 
@@ -78,7 +75,6 @@ platform :ios do
 
     project_or_workspace_path = project_path || workspace_path
 
-    # MAIN APP
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: main_team_id,
@@ -88,7 +84,6 @@ platform :ios do
       profile_name: main_profile
     )
 
-    # NOTIFICATION EXTENSION
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: main_team_id,
@@ -98,7 +93,6 @@ platform :ios do
       profile_name: ext_profile
     )
 
-    # 8️⃣ Экспорт профилей для .ipa
     provisioning_profiles = {}
     provisioning_profiles[main_bundle] = main_profile if main_bundle && main_profile
     provisioning_profiles[ext_bundle]  = ext_profile  if ext_bundle  && ext_profile
@@ -123,24 +117,33 @@ platform :ios do
       build_app(common.merge(project: project_path))
     end
 
-    # 🚀 10) Загрузка в App Store Connect / TestFlight
-    ipa_path = Dir[File.join(ipa_output_dir, "*.ipa")].first
-    UI.message "📦 IPA для загрузки: #{ipa_path}"
-
-    upload_to_app_store(
-      ipa: ipa_path,
-      skip_screenshots: true,
-      skip_metadata: true,
-      submit_for_review: false,   # отключено, чтобы не автопубликовать
-      dev_portal_team_id: main_team_id,
-      app_identifier: main_bundle,
-      api_key: {
-        key_id: ENV["APPSTORE_KEY_ID"],
-        issuer_id: ENV["APPSTORE_ISSUER_ID"],
-        key_content: ENV["APPSTORE_P8"]
-      }
+    app_store_connect_api_key(
+      key_id:      ENV["APPSTORE_KEY_ID"],
+      issuer_id:   ENV["APPSTORE_ISSUER_ID"],
+      key_content: ENV["APPSTORE_P8"]
     )
 
-    UI.success("🎉 Build успешно загружен в App Store Connect (TestFlight)!")
+    ipa_path = Dir[File.join(ipa_output_dir, "*.ipa")].first
+    UI.user_error!("❌ IPA не найден по пути #{ipa_output_dir}") if ipa_path.nil?
+    UI.message "📦 IPA для загрузки: #{ipa_path}"
+
+    if ENV["UPLOAD_TO_TESTFLIGHT"] == "1" || ENV["UPLOAD_CHANNEL"] == "beta"
+      upload_to_testflight(
+        ipa: ipa_path,
+        skip_waiting_for_build_processing: true,
+        changelog: (ENV["CHANGELOG"] || "Auto-upload from CI")
+      )
+    else
+      upload_to_app_store(
+        ipa: ipa_path,
+        submit_for_review: false,
+        automatic_release: false,
+        force: true,
+        skip_screenshots: true,
+        run_precheck_before_submit: false
+      )
+    end
+
+    UI.success("🎉 Билд загружен в App Store Connect!")
   end
 end
