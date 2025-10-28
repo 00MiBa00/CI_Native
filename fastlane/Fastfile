@@ -38,26 +38,18 @@ platform :ios do
 
   desc "Build .ipa for App Store (native)"
   lane :build do
-    # 0) стабильный кейчейн для CI
     setup_ci
-
-    # 1) подтянуть кодсайнинг
     sync_certificates
 
-    # 2) подготовить параметры окружения
     scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
     workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
     project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
     project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-    # 3) корень репозитория (Fastfile лежит в fastlane/, уходим на уровень вверх)
     repo_root = File.expand_path("..", __dir__)
-
-    # 4) абсолютные пути
     workspace_path = workspace_input.empty? ? nil : File.expand_path(workspace_input, repo_root)
     project_path   = project_input.empty?   ? nil : File.expand_path(project_input,   repo_root)
 
-    # 5) авто-поиск, если не передали переменные
     if workspace_path.nil? && project_path.nil?
       found_ws = Dir[File.join(repo_root, "*.xcworkspace")].first
       found_pr = Dir[File.join(repo_root, "*.xcodeproj")].first
@@ -65,7 +57,6 @@ platform :ios do
       project_path   = found_pr if found_pr
     end
 
-    # 6) проверки и лог
     UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace_path.nil? && project_path.nil?
     UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
 
@@ -73,10 +64,8 @@ platform :ios do
     UI.message "➡️  Using scheme: #{scheme}"
     UI.message "➡️  Using workspace: #{workspace_path}" if workspace_path
     UI.message "➡️  Using project:   #{project_path}"   if project_path
-    UI.message "🧩 workspace exists? #{File.exist?(workspace_path)}" if workspace_path
-    UI.message "🧩 project exists?   #{File.exist?(project_path)}"   if project_path
 
-    # 7) ЯВНОЕ сопоставление профилей и настройка подписи таргетов
+    # === ЯВНАЯ настройка подписи ДЛЯ ОБОИХ ТАРГЕТОВ ===
     main_bundle = ENV["IOS_BUNDLE_ID"]
     ext_bundle  = "#{main_bundle}.notifications"
 
@@ -84,25 +73,34 @@ platform :ios do
     main_profile  = ENV["sigh_#{main_bundle}_appstore_profile-name"]
     ext_profile   = ENV["sigh_#{ext_bundle}_appstore_profile-name"]
 
-    # Автоподпись для основного приложения (как правило, таргет совпадает с именем схемы)
-    update_code_signing_settings(
-      use_automatic_signing: true,
-      path: project_path || workspace_path,
-      targets: scheme
-    )
+    # Имя таргета основной аппки (по умолчанию = схема)
+    main_target = ENV["IOS_MAIN_TARGET"].to_s.empty? ? scheme : ENV["IOS_MAIN_TARGET"]
+    # Имя таргета экстеншена (замени, если другое)
+    notif_target = ENV["IOS_NOTIF_TARGET"].to_s.empty? ? "ImageNotificationServiceExt" : ENV["IOS_NOTIF_TARGET"]
 
-    # Ручная подпись для Notification Service Extension (чтобы не искался старый профиль по имени)
+    project_or_workspace_path = project_path || workspace_path
+
+    # MAIN APP -> manual + конкретный профиль
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: main_team_id,
       code_sign_identity: "Apple Distribution",
-      path: project_path || workspace_path,
-      targets: "ImageNotificationServiceExt",
-      profile_name: ext_profile
-      # profile_uuid: ENV["sigh_#{ext_bundle}_appstore"]  # опционально
+      path: project_or_workspace_path,
+      targets: main_target,
+      profile_name: main_profile
     )
 
-    # 8) общие параметры для build_app, закрепляем профили на экспорт
+    # NOTIFICATION EXT -> manual + свой профиль
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: main_team_id,
+      code_sign_identity: "Apple Distribution",
+      path: project_or_workspace_path,
+      targets: notif_target,
+      profile_name: ext_profile
+    )
+
+    # Закрепляем профили на экспорт, чтобы -exportArchive не тянул старые
     provisioning_profiles = {}
     provisioning_profiles[main_bundle] = main_profile if main_bundle && main_profile
     provisioning_profiles[ext_bundle]  = ext_profile  if ext_bundle  && ext_profile
@@ -110,7 +108,8 @@ platform :ios do
     common = {
       scheme: scheme,
       export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates",
+      export_team_id: main_team_id,
+      xcargs: "DEVELOPMENT_TEAM=#{main_team_id} CODE_SIGN_IDENTITY='Apple Distribution'",
       output_directory: File.join(repo_root, "build/iOS/ipa_out"),
       export_options: {
         method: "app-store",
@@ -118,7 +117,6 @@ platform :ios do
       }
     }
 
-    # 9) сборка
     if workspace_path
       build_app(common.merge(workspace: workspace_path))
     else
