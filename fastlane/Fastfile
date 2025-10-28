@@ -140,7 +140,9 @@ platform :ios do
         automatic_release: false,
         force: true,
         skip_screenshots: true,
-        run_precheck_before_submit: false
+        skip_metadata: true,
+        run_precheck_before_submit: false,
+        app_identifier: ENV["IOS_BUNDLE_ID"]
       )
     end
 
