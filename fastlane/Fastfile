@@ -39,55 +39,68 @@ platform :ios do
   # == Сборка .ipa для App Store (нативка)
   desc "Build .ipa for App Store (native)"
   lane :build do
-    # 1️⃣ подтянуть кодсайнинг
+    # 1) подтянуть кодсайнинг
     sync_certificates
 
-    # 2️⃣ перейти в корень репозитория на раннере,
-    #    чтобы поиск *.xcworkspace/*.xcodeproj работал корректно
-    Dir.chdir(ENV["GITHUB_WORKSPACE"] || ".") do
-      UI.message("📂 PWD: #{Dir.pwd}")
-      UI.message("📄 Root files: #{Dir['*'].join(', ')}")
+    # 2) подготовить параметры окружения
+    scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
+    workspace_input = (ENV["XCODE_WORKSPACE"] || "").strip
+    project_input   = (ENV["XCODE_PROJECT"]   || "").strip
+    project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
 
-      # 3️⃣ подготовить параметры окружения
-      scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
-      workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
-      project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
-      project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
+    # 3) если .xcworkspace отсутствует — ставим Pods (сгенерирует workspace)
+    need_pods = !File.exist?(workspace_input) && Dir["*.xcworkspace"].empty?
+    if need_pods
+      UI.message("🧩 No .xcworkspace found -> running CocoaPods...")
+      cocoapods(
+        clean: true,
+        repo_update: true,
+        use_bundle_exec: true
+      )
+    end
 
-      # 4️⃣ определить workspace/project
-      workspace = if !workspace_input.empty? && File.exist?(workspace_input)
-                    workspace_input
-                  else
-                    Dir["*.xcworkspace"].first
-                  end
+    # 4) определяем фактический workspace/project
+    workspace = nil
+    project   = nil
 
-      project = if !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
-                  project_input
-                else
-                  Dir["*.xcodeproj"].first
-                end
+    if !workspace_input.empty? && File.exist?(workspace_input)
+      workspace = workspace_input
+    end
+    if workspace.nil?
+      found_ws = Dir["*.xcworkspace"].first
+      workspace = found_ws if found_ws
+    end
 
-      # 5️⃣ валидация
-      UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
-      UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
-
-      UI.message("➡️  Using scheme: #{scheme}")
-      UI.message("➡️  Using workspace: #{workspace}") if workspace
-      UI.message("➡️  Using project:   #{project}")   if project
-
-      # 6️⃣ сборка
-      common = {
-        scheme: scheme,
-        export_method: "app-store",
-        xcargs: "-allowProvisioningUpdates",
-        output_directory: "build/iOS/ipa_out"
-      }
-
-      if workspace
-        build_app(common.merge(workspace: workspace))
+    if workspace.nil?
+      if !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
+        project = project_input
       else
-        build_app(common.merge(project: project))
+        found_pr = Dir["*.xcodeproj"].first
+        project  = found_pr if found_pr
       end
+    end
+
+    # 5) проверки и лог
+    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
+    UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
+
+    UI.message("📂 PWD: #{Dir.pwd}")
+    UI.message("➡️  Using scheme: #{scheme}")
+    UI.message("➡️  Using workspace: #{workspace}") if workspace
+    UI.message("➡️  Using project:   #{project}")   if project
+
+    # 6) сборка
+    common = {
+      scheme: scheme,
+      export_method: "app-store",
+      xcargs: "-allowProvisioningUpdates",
+      output_directory: "build/iOS/ipa_out"
+    }
+
+    if workspace
+      build_app(common.merge(workspace: workspace))
+    else
+      build_app(common.merge(project: project))
     end
   end
 end
