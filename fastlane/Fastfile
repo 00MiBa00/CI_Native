@@ -38,18 +38,8 @@ platform :ios do
 
   desc "Build .ipa for App Store (native)"
   lane :build do
-    # 0) надёжная настройка keychain для CI (чтобы не подвисал codesign)
+    # 0) стабильный кейчейн для CI
     setup_ci
-
-    # Если хочешь свой keychain с паролем из секрета — раскомментируй блок ниже
-    # create_keychain(
-    #   name: "build.keychain",
-    #   password: ENV["KEYCHAIN_PASSWORD"] || "temp_pass_123",
-    #   default_keychain: true,
-    #   unlock: true,
-    #   timeout: 3600,
-    #   lock_when_sleeps: false
-    # )
 
     # 1) подтянуть кодсайнинг
     sync_certificates
@@ -86,17 +76,36 @@ platform :ios do
     UI.message "🧩 workspace exists? #{File.exist?(workspace_path)}" if workspace_path
     UI.message "🧩 project exists?   #{File.exist?(project_path)}"   if project_path
 
-    # 7) явное сопоставление профилей, чтобы не искался старый 'Urban Road Noise Notifications'
-    main_id = ENV["IOS_BUNDLE_ID"]
-    ext_id  = "#{ENV["IOS_BUNDLE_ID"]}.notifications"
+    # 7) ЯВНОЕ сопоставление профилей и настройка подписи таргетов
+    main_bundle = ENV["IOS_BUNDLE_ID"]
+    ext_bundle  = "#{main_bundle}.notifications"
 
+    main_team_id  = ENV["sigh_#{main_bundle}_appstore_team-id"]
+    main_profile  = ENV["sigh_#{main_bundle}_appstore_profile-name"]
+    ext_profile   = ENV["sigh_#{ext_bundle}_appstore_profile-name"]
+
+    # Автоподпись для основного приложения (как правило, таргет совпадает с именем схемы)
+    update_code_signing_settings(
+      use_automatic_signing: true,
+      path: project_path || workspace_path,
+      targets: scheme
+    )
+
+    # Ручная подпись для Notification Service Extension (чтобы не искался старый профиль по имени)
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: main_team_id,
+      code_sign_identity: "Apple Distribution",
+      path: project_path || workspace_path,
+      targets: "ImageNotificationServiceExt",
+      profile_name: ext_profile
+      # profile_uuid: ENV["sigh_#{ext_bundle}_appstore"]  # опционально
+    )
+
+    # 8) общие параметры для build_app, закрепляем профили на экспорт
     provisioning_profiles = {}
-    if main_id && !main_id.empty?
-      provisioning_profiles[main_id] = ENV["sigh_#{main_id}_appstore_profile-name"]
-    end
-    if ext_id && !ext_id.empty?
-      provisioning_profiles[ext_id]  = ENV["sigh_#{ext_id}_appstore_profile-name"]
-    end
+    provisioning_profiles[main_bundle] = main_profile if main_bundle && main_profile
+    provisioning_profiles[ext_bundle]  = ext_profile  if ext_bundle  && ext_profile
 
     common = {
       scheme: scheme,
@@ -104,11 +113,12 @@ platform :ios do
       xcargs: "-allowProvisioningUpdates",
       output_directory: File.join(repo_root, "build/iOS/ipa_out"),
       export_options: {
+        method: "app-store",
         provisioningProfiles: provisioning_profiles
       }
     }
 
-    # 8) сборка
+    # 9) сборка
     if workspace_path
       build_app(common.merge(workspace: workspace_path))
     else
