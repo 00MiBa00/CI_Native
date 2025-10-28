@@ -4,7 +4,6 @@ org, repo             = (ENV["GITHUB_REPOSITORY"] || "").split("/")
 match_org, match_repo = (ENV["MATCH_REPOSITORY"]  || "").split("/")
 
 platform :ios do
-  # == One-time: создать writable deploy key в match-репо (как в CI_Core)
   desc "Initialize CI with writable deploy key (one-time)"
   lane :init_ci do
     github_action(
@@ -17,7 +16,6 @@ platform :ios do
     )
   end
 
-  # == Синхронизация кодсайна (WRITE) — как в CI_Core
   desc "Sync codesigning certificates (WRITE), как в CI_Core"
   lane :sync_certificates do
     app_store_connect_api_key(
@@ -38,9 +36,21 @@ platform :ios do
     )
   end
 
-  # == Сборка .ipa для App Store (нативка)
   desc "Build .ipa for App Store (native)"
   lane :build do
+    # 0) надёжная настройка keychain для CI (чтобы не подвисал codesign)
+    setup_ci
+
+    # Если хочешь свой keychain с паролем из секрета — раскомментируй блок ниже
+    # create_keychain(
+    #   name: "build.keychain",
+    #   password: ENV["KEYCHAIN_PASSWORD"] || "temp_pass_123",
+    #   default_keychain: true,
+    #   unlock: true,
+    #   timeout: 3600,
+    #   lock_when_sleeps: false
+    # )
+
     # 1) подтянуть кодсайнинг
     sync_certificates
 
@@ -49,10 +59,6 @@ platform :ios do
     workspace_input = (ENV["XCODE_WORKSPACE"] || "").to_s.strip
     project_input   = (ENV["XCODE_PROJECT"]   || "").to_s.strip
     project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
-
-    # имена таргетов (как в CI_Core – главный и extension)
-    app_target       = (ENV["IOS_APP_TARGET"]       || scheme || ENV["PROJECT_NAME"] || "").to_s.strip
-    extension_target = (ENV["IOS_EXTENSION_TARGET"] || "ImageNotificationServiceExt").to_s.strip
 
     # 3) корень репозитория (Fastfile лежит в fastlane/, уходим на уровень вверх)
     repo_root = File.expand_path("..", __dir__)
@@ -80,74 +86,29 @@ platform :ios do
     UI.message "🧩 workspace exists? #{File.exist?(workspace_path)}" if workspace_path
     UI.message "🧩 project exists?   #{File.exist?(project_path)}"   if project_path
 
-    # 7) принудительная настройка code signing (как в CI_Core)
-    #    match экспортирует env вида:
-    #    - sigh_<BUNDLE>_appstore
-    #    - sigh_<BUNDLE>_appstore_profile-name
-    #    - sigh_<BUNDLE>_appstore_team-id
-    #    - sigh_<BUNDLE>.notifications_appstore (и *_profile-name, *_team-id)
-    bundle_id        = ENV["IOS_BUNDLE_ID"]
-    team_id_main     = ENV["sigh_#{bundle_id}_appstore_team-id"]
-    profile_main     = ENV["sigh_#{bundle_id}_appstore_profile-name"]
-    profile_uuid_main= ENV["sigh_#{bundle_id}_appstore"]
+    # 7) явное сопоставление профилей, чтобы не искался старый 'Urban Road Noise Notifications'
+    main_id = ENV["IOS_BUNDLE_ID"]
+    ext_id  = "#{ENV["IOS_BUNDLE_ID"]}.notifications"
 
-    profile_ext      = ENV["sigh_#{bundle_id}.notifications_appstore_profile-name"]
-    profile_uuid_ext = ENV["sigh_#{bundle_id}.notifications_appstore"]
-
-    code_sign_identity = "Apple Distribution"
-
-    # для update_code_signing_settings нужен .xcodeproj
-    proj_for_signing = project_path || Dir[File.join(repo_root, "*.xcodeproj")].first
-    UI.user_error!("❌ Не найден .xcodeproj для настройки подписей") if proj_for_signing.nil? || !File.exist?(proj_for_signing)
-
-    # Сначала можно включить автоматический signing для всего проекта…
-    update_code_signing_settings(
-      use_automatic_signing: true,
-      path: proj_for_signing,
-      team_id: team_id_main
-    )
-
-    # …а затем для нужных таргетов задать ручной профиль (паттерн CI_Core)
-
-    # Extension
-    if profile_ext && profile_uuid_ext && !profile_ext.empty? && !profile_uuid_ext.empty?
-      update_code_signing_settings(
-        use_automatic_signing: false,
-        path: proj_for_signing,
-        targets: extension_target,
-        team_id: team_id_main,
-        code_sign_identity: code_sign_identity,
-        profile_name: profile_ext,
-        profile_uuid: profile_uuid_ext
-      )
-    else
-      UI.important("⚠️  Профили для extension не найдены в ENV, пропускаю ручную настройку: #{extension_target}")
+    provisioning_profiles = {}
+    if main_id && !main_id.empty?
+      provisioning_profiles[main_id] = ENV["sigh_#{main_id}_appstore_profile-name"]
+    end
+    if ext_id && !ext_id.empty?
+      provisioning_profiles[ext_id]  = ENV["sigh_#{ext_id}_appstore_profile-name"]
     end
 
-    # Главный таргет приложения
-    if profile_main && profile_uuid_main && !profile_main.empty? && !profile_uuid_main.empty?
-      update_code_signing_settings(
-        use_automatic_signing: false,
-        path: proj_for_signing,
-        targets: app_target,
-        team_id: team_id_main,
-        code_sign_identity: code_sign_identity,
-        profile_name: profile_main,
-        profile_uuid: profile_uuid_main
-      )
-    else
-      UI.important("⚠️  Профили для основного таргета не найдены в ENV, пропускаю ручную настройку: #{app_target}")
-    end
-
-    # 8) общие параметры для build_app
     common = {
       scheme: scheme,
       export_method: "app-store",
       xcargs: "-allowProvisioningUpdates",
-      output_directory: File.join(repo_root, "build/iOS/ipa_out")
+      output_directory: File.join(repo_root, "build/iOS/ipa_out"),
+      export_options: {
+        provisioningProfiles: provisioning_profiles
+      }
     }
 
-    # 9) сборка
+    # 8) сборка
     if workspace_path
       build_app(common.merge(workspace: workspace_path))
     else
