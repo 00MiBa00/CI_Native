@@ -15,66 +15,52 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      # SSH для доступа к match-репозиторию (как в CI_Core)
-      - name: Setup SSH for match (CI_Core style)
+      # Добавляем MATCH_DEPLOY_KEY в ssh-agent (как в CI_Core)
+      - name: Setup SSH for match (agent + known_hosts)
         if: ${{ secrets.MATCH_DEPLOY_KEY != '' }}
         env:
-          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}   # приватный ключ OpenSSH
-          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}   # формат: org/repo
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
         shell: bash
         run: |
           set -euo pipefail
 
-          # Запускаем ssh-agent и добавляем ключ
+          echo "→ Setting up SSH agent and key"
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${MATCH_DEPLOY_KEY}"
 
-          # ~/.ssh с корректными правами
+          # Конфиг для known_hosts
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-
-          # Сохраняем ключ ещё и как файл для IdentityFile
-          umask 177
-          cat > ~/.ssh/id_match <<EOF
-${MATCH_DEPLOY_KEY}
-EOF
-          chmod 600 ~/.ssh/id_match
-
-          # Конфиг для github.com
-          {
-            echo "Host github.com"
-            echo "  HostName github.com"
-            echo "  IdentityFile ~/.ssh/id_match"
-            echo "  IdentitiesOnly yes"
-            echo "  StrictHostKeyChecking accept-new"
-          } > ~/.ssh/config
-          chmod 600 ~/.ssh/config
-
-          # known_hosts (на всякий случай, если accept-new не сработает)
           ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
           chmod 600 ~/.ssh/known_hosts
 
-          # Self-check: есть ли доступ к match-репозиторию по SSH
-          echo "Checking SSH access to git@github.com:${MATCH_REPOSITORY}.git"
-          git ls-remote "git@github.com:${MATCH_REPOSITORY}.git" > /dev/null
-          echo "OK: SSH access to match repo is working."
+          echo "→ Testing SSH access to git@github.com:${MATCH_REPOSITORY}.git"
+          git ls-remote "git@github.com:${MATCH_REPOSITORY}.git" > /dev/null \
+            && echo "✅ SSH access OK" \
+            || echo "⚠️  SSH access check failed (verify deploy key permissions)"
 
       - name: Build (нативный через Fastlane)
         env:
           APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
           APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
           APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
+
           IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
+
           GH_PAT:              ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY:   ${{ github.repository }}
-          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}   # org/repo
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}
           MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
           MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
+
           IOS_SCHEME:          ${{ vars.IOS_SCHEME }}
           XCODE_WORKSPACE:     ${{ vars.XCODE_WORKSPACE }}
           PROJECT_NAME:        ${{ vars.PROJECT_NAME }}
-          # чтобы match мог коммитить при необходимости (как в CI_Core)
+
+          # Git identity (как в CI_Core)
           GIT_FULL_NAME:       ci-bot
           GIT_USER_EMAIL:      ci-bot@local
         run: |
+          echo "→ Starting Fastlane build"
           bundle exec fastlane ios build
