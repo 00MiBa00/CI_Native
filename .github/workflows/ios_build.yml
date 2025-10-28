@@ -2,6 +2,7 @@ name: Build iOS (native)
 
 on:
   workflow_dispatch:
+  
 
 jobs:
   build:
@@ -47,6 +48,19 @@ jobs:
           ls -la
           echo "Workspaces:"; find . -name "*.xcworkspace" -maxdepth 3 -print || true
           echo "Projects:";   find . -name "*.xcodeproj"  -maxdepth 3 -print || true
+          
+      - name: Debug Xcode structure
+        shell: bash
+        run: |
+          echo "PWD: $(pwd)"
+          echo "== Top level =="
+          ls -la
+          echo
+          echo "== Find Xcode workspaces =="
+          find . -name "*.xcworkspace" -print
+          echo
+          echo "== Find Xcode projects =="
+          find . -name "*.xcodeproj" -print
 
       - name: Build (нативный через Fastlane)
         env:
