@@ -1,106 +1,98 @@
-org, repo             = (ENV["GITHUB_REPOSITORY"] || "").split("/")
-match_org, match_repo = (ENV["MATCH_REPOSITORY"]  || "").split("/")
+name: Build iOS (native)
 
-platform :ios do
-  # == One-time: создать writable deploy key в match-репо (как в CI_Core)
-  desc "Initialize CI with writable deploy key (one-time)"
-  lane :init_ci do
-    github_action(
-      api_token:  ENV["GH_PAT"],
-      org:        org,
-      repo:       repo,
-      match_org:  match_org,
-      match_repo: match_repo,
-      writable_deploy_key: true
-    )
-  end
+on:
+  workflow_dispatch:
 
-  # == Синхронизация кодсайна (WRITE) — как в CI_Core
-  desc "Sync codesigning certificates (WRITE), как в CI_Core"
-  lane :sync_certificates do
-    app_store_connect_api_key(
-      key_id:      ENV["APPSTORE_KEY_ID"],
-      issuer_id:   ENV["APPSTORE_ISSUER_ID"],
-      key_content: ENV["APPSTORE_P8"]
-    )
+jobs:
+  build:
+    runs-on: macos-latest
 
-    main_app_bundle_id  = ENV["IOS_BUNDLE_ID"]
-    extension_bundle_id = "#{ENV["IOS_BUNDLE_ID"]}.notifications"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    match(
-      type: "appstore",
-      storage_mode: "git",
-      git_url: "git@github.com:#{match_org}/#{match_repo}.git",
-      app_identifier: [main_app_bundle_id, extension_bundle_id],
-      readonly: false
-    )
-  end
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
 
-  # == Сборка .ipa для App Store (нативка)
-  desc "Build .ipa for App Store (native)"
-  lane :build do
-    # 1) подтянуть кодсайнинг
-    sync_certificates
+      # SSH для доступа к match-репозиторию (как в CI_Core)
+      - name: Setup SSH for match (CI_Core style)
+        env:
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}   # приватный ключ OpenSSH
+          MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}   # org/repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${MATCH_DEPLOY_KEY:-}" ]; then
+            echo "⚠️  MATCH_DEPLOY_KEY is empty, skipping SSH setup"
+            exit 0
+          fi
 
-    # 2) подготовить параметры окружения
-    scheme          = (ENV["IOS_SCHEME"] || ENV["PROJECT_NAME"]).to_s.strip
-    workspace_input = (ENV["XCODE_WORKSPACE"] || "").strip
-    project_input   = (ENV["XCODE_PROJECT"]   || "").strip
-    project_input   = "#{ENV["PROJECT_NAME"]}.xcodeproj" if project_input.empty? && !ENV["PROJECT_NAME"].to_s.empty?
+          echo "→ Starting ssh-agent and adding deploy key"
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${MATCH_DEPLOY_KEY}"
 
-    # 3) если .xcworkspace отсутствует — ставим Pods (сгенерирует workspace)
-    need_pods = !File.exist?(workspace_input) && Dir["*.xcworkspace"].empty?
-    if need_pods
-      UI.message("🧩 No .xcworkspace found -> running CocoaPods...")
-      cocoapods(
-        clean: true,
-        repo_update: true,
-        use_bundle_exec: true
-      )
-    end
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          umask 177
+          echo "${MATCH_DEPLOY_KEY}" > ~/.ssh/id_match
+          chmod 600 ~/.ssh/id_match
 
-    # 4) определяем фактический workspace/project
-    workspace = nil
-    project   = nil
+          {
+            echo "Host github.com"
+            echo "  HostName github.com"
+            echo "  IdentityFile ~/.ssh/id_match"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking accept-new"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
 
-    if !workspace_input.empty? && File.exist?(workspace_input)
-      workspace = workspace_input
-    end
-    if workspace.nil?
-      found_ws = Dir["*.xcworkspace"].first
-      workspace = found_ws if found_ws
-    end
+          # known_hosts на всякий случай
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
 
-    if workspace.nil?
-      if !project_input.empty? && File.exist?(project_input) && project_input.end_with?(".xcodeproj")
-        project = project_input
-      else
-        found_pr = Dir["*.xcodeproj"].first
-        project  = found_pr if found_pr
-      end
-    end
+      # DEBUG: покажем, что за файлы есть и что найдём для сборки
+      - name: Debug Xcode files
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "PWD: $(pwd)"
+          echo "Top-level files:"
+          ls -la
+          echo "Find *.xcworkspace:"
+          find . -name "*.xcworkspace" -maxdepth 3 -print || true
+          echo "Find *.xcodeproj:"
+          find . -name "*.xcodeproj"  -maxdepth 3 -print || true
 
-    # 5) проверки и лог
-    UI.user_error!("❌ Не найден workspace или project — укажи XCODE_WORKSPACE или PROJECT_NAME.") if workspace.nil? && project.nil?
-    UI.user_error!("❌ Не указана схема сборки (IOS_SCHEME/PROJECT_NAME).") if scheme.empty?
+      - name: Build (нативный через Fastlane)
+        env:
+          # App Store Connect (API key)
+          APPSTORE_ISSUER_ID:  ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPSTORE_KEY_ID:     ${{ secrets.APPSTORE_KEY_ID }}
+          APPSTORE_P8:         ${{ secrets.APPSTORE_P8 }}
 
-    UI.message("📂 PWD: #{Dir.pwd}")
-    UI.message("➡️  Using scheme: #{scheme}")
-    UI.message("➡️  Using workspace: #{workspace}") if workspace
-    UI.message("➡️  Using project:   #{project}")   if project
+          # Bundle ID
+          IOS_BUNDLE_ID:       ${{ secrets.IOS_BUNDLE_ID }}
 
-    # 6) сборка
-    common = {
-      scheme: scheme,
-      export_method: "app-store",
-      xcargs: "-allowProvisioningUpdates",
-      output_directory: "build/iOS/ipa_out"
-    }
+          # match/git
+          GH_PAT:              ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:   ${{ github.repository }}
+          MATCH_REPOSITORY:    ${{ secrets.MATCH_REPOSITORY }}   # org/repo
+          MATCH_PASSWORD:      ${{ secrets.MATCH_PASSWORD }}
+          MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
 
-    if workspace
-      build_app(common.merge(workspace: workspace))
-    else
-      build_app(common.merge(project: project))
-    end
-  end
-end
+          # Параметры сборки
+          IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}          # напр. ChickCare
+          PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}        # напр. ChickCare
+          # XCODE_WORKSPACE:   ${{ secrets.XCODE_WORKSPACE }}     # (необязательно) ChickCare.xcworkspace
+          # XCODE_PROJECT:     ${{ secrets.XCODE_PROJECT }}       # (необязательно) ChickCare.xcodeproj
+
+          # Автор для коммитов в match (если потребуется write)
+          GIT_FULL_NAME:       ci-bot
+          GIT_USER_EMAIL:      ci-bot@local
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global user.name  "${GIT_FULL_NAME}"
+          git config --global user.email "${GIT_USER_EMAIL}"
+          bundle exec fastlane ios build
