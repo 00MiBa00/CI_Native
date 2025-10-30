@@ -7,8 +7,7 @@ jobs:
   generate:
     runs-on: macos-latest
     env:
-      # используем env, чтобы можно было проверять условия и пробрасывать в fastlane
-      MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}   # формата org/repo
+      MATCH_REPOSITORY: ${{ secrets.MATCH_REPOSITORY }}
       MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
       MATCH_PASSWORD:   ${{ secrets.MATCH_PASSWORD }}
       IOS_BUNDLE_ID:    ${{ secrets.IOS_BUNDLE_ID }}
@@ -25,7 +24,6 @@ jobs:
           ruby-version: '3.2'
           bundler-cache: true
 
-      # 1:1 стиль CI_Core — подключаем приватный ключ deploy key через экшен
       - name: Add SSH key (match deploy key)
         if: ${{ env.MATCH_DEPLOY_KEY != '' }}
         uses: webfactory/ssh-agent@v0.9.0
