@@ -69,13 +69,11 @@ jobs:
           MATCH_DEPLOY_KEY:    ${{ secrets.MATCH_DEPLOY_KEY }}
 
           # Параметры сборки
-          IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}       # напр. ChickCare
-          PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}     # напр. ChickCare
-          # XCODE_WORKSPACE:   ${{ secrets.XCODE_WORKSPACE }}  # если нужно указать явно, напр. ChickCare.xcworkspace
-          # XCODE_PROJECT:     ${{ secrets.XCODE_PROJECT }}    # если нужно указать явно, напр. ChickCare.xcodeproj
+          IOS_SCHEME:          ${{ secrets.IOS_SCHEME }}       
+          PROJECT_NAME:        ${{ secrets.PROJECT_NAME }}     
+          # XCODE_WORKSPACE:   ${{ secrets.XCODE_WORKSPACE }}  
+          # XCODE_PROJECT:     ${{ secrets.XCODE_PROJECT }}    
           BUILD_NUMBER:        ${{ github.run_number }}
-
-          # Автор для коммитов в match
           GIT_FULL_NAME:       ci-bot
           GIT_USER_EMAIL:      ci-bot@local
         shell: bash
