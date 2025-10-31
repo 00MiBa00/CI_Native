@@ -7,7 +7,7 @@ import Network
 import AppTrackingTransparency
 import FirebaseCore
 
-class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
+class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, MessagingDelegate, UNUserNotificationCenterDelegate, DeepLinkDelegate {
     
     
     let appsFlyerDevKey = "ivnKaLc4fq4wM3BycYpqfc"
@@ -26,6 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, Mes
         AppsFlyerLib.shared().appsFlyerDevKey = appsFlyerDevKey
         AppsFlyerLib.shared().appleAppID = appleAppID
         AppsFlyerLib.shared().delegate = self
+        AppsFlyerLib.shared().deepLinkDelegate = self
         AppsFlyerLib.shared().start()
         
         // Firebase Messaging delegat
@@ -58,6 +59,48 @@ class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, Mes
         return true
     }
     
+    func didResolveDeepLink(_ result: DeepLinkResult) {
+        
+        switch result.status {
+        case .notFound:
+            AppsFlyerLib.shared().logEvent(name: "DeepLinkNotFound", values: nil)
+            return
+            
+        case .failure:
+            if let error = result.error {
+                AppsFlyerLib.shared().logEvent(name: "DeepLinkError", values: nil)
+            } else {
+                print("[AFSDK] Deep link error: unknown")
+                AppsFlyerLib.shared().logEvent(name: "DeepLinkError", values: nil)
+            }
+            return
+            
+        case .found:
+            AppsFlyerLib.shared().logEvent(name: "DeepLinkFound", values: nil)
+
+            guard let deepLink = result.deepLink else {
+                AppsFlyerLib.shared().logEvent(name: "NoDeepLinkData", values: nil)
+                print("[AFSDK] No deep link data")
+                return
+            }
+
+            // Проверка на deferred / direct
+            let isDeferred = deepLink.isDeferred ?? false
+            print(isDeferred ? "This is a deferred deep link" : "This is a direct deep link")
+
+            // Извлечение параметров диплинка
+            var deepLinkParams: [String: Any] = [:]
+
+            if let clickEventDict = (deepLink.clickEvent["click_event"] as? [String: Any]) {
+                deepLinkParams = clickEventDict
+            } else {
+                deepLinkParams = deepLink.clickEvent
+            }
+        
+            self.conversionData.merge(deepLinkParams) { (_, new) in new }
+        }
+    }
+    
     
     @objc private func activateApps() {
         AppsFlyerLib.shared().start()
@@ -69,7 +112,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, Mes
     
     // AppsFlyer Delegate Methods
     func onConversionDataSuccess(_ data: [AnyHashable: Any]) {
-        conversionData = data
+        conversionData.merge(data) { (_, new) in new }
         NotificationCenter.default.post(name: Notification.Name("ConversionDataReceived"), object: nil, userInfo: ["conversionData": conversionData])
     }
     
@@ -355,7 +398,8 @@ class SplashViewModel: ObservableObject {
     }
     
     @objc private func handleConversionData(_ notification: Notification) {
-        conversionData = (notification.userInfo ?? [:])["conversionData"] as? [AnyHashable: Any] ?? [:]
+        var pushData = (notification.userInfo ?? [:])["conversionData"] as? [AnyHashable: Any] ?? [:]
+        conversionData.merge(pushData) { (_, new) in new }
         processConversionData()
     }
     
@@ -497,7 +541,9 @@ class SplashViewModel: ObservableObject {
     private func setModeToFuntik() {
         UserDefaults.standard.set("Funtik", forKey: "app_mode")
         UserDefaults.standard.set(true, forKey: "hasLaunched")
-        if let window = UIApplication.shared.windows.first {
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
             print("open funtik")
             window.rootViewController = UIHostingController(rootView: ScreamAndRushMainView())
         }
@@ -695,8 +741,12 @@ struct ChickenCareApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SplashView()
-                .environmentObject(appState)
+            if UserDefaults.standard.string(forKey: "app_mode") == "Funtik" {
+                ScreamAndRushMainView()
+            } else {
+                SplashView()
+                    .environmentObject(appState)
+            }
         }
     }
 }
