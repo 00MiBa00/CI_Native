@@ -10,8 +10,8 @@ import FirebaseCore
 class AppDelegate: UIResponder, UIApplicationDelegate, AppsFlyerLibDelegate, MessagingDelegate, UNUserNotificationCenterDelegate, DeepLinkDelegate {
     
     
-    let appsFlyerDevKey = "ivnKaLc4fq4wM3BycYpqfc"
-    let appleAppID = "6754035576"
+    let appsFlyerDevKey = "rZAzaGEBkuVdYJyBoAYyQE"
+    let appleAppID = "6754600179"
   //  let endPoint = "https://urbanroadnoise.com"
     
     var window: UIWindow?
@@ -465,7 +465,7 @@ class SplashViewModel: ObservableObject {
     }
     
     func sendConfigRequest() {
-        guard let url = URL(string: "https://urbanroadnoise.com/config.php") else {
+        guard let url = URL(string: "https://unitumapp.com/config.php") else {
             handleConfigError()
             return
         }
@@ -478,7 +478,7 @@ class SplashViewModel: ObservableObject {
         body["af_id"] = AppsFlyerLib.shared().getAppsFlyerUID()
         body["bundle_id"] = Bundle.main.bundleIdentifier ?? "com.example.app"
         body["os"] = "iOS"
-        body["store_id"] = "id6753303972"
+        body["store_id"] = "id6754600179"
         body["locale"] = Locale.preferredLanguages.first?.prefix(2).uppercased() ?? "EN"
         body["push_token"] = UserDefaults.standard.string(forKey: "fcm_token") ?? Messaging.messaging().fcmToken
         body["firebase_project_id"] = FirebaseApp.app()?.options.gcmSenderID
@@ -545,7 +545,7 @@ class SplashViewModel: ObservableObject {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let window = windowScene.windows.first {
             print("open funtik")
-            window.rootViewController = UIHostingController(rootView: ScreamAndRushMainView())
+            window.rootViewController = UIHostingController(rootView: MeasurementToolkitWrapperView())
         }
 //        DispatchQueue.main.async {
 //            //self.currentScreen = .funtik
@@ -742,7 +742,7 @@ struct ChickenCareApp: App {
     var body: some Scene {
         WindowGroup {
             if UserDefaults.standard.string(forKey: "app_mode") == "Funtik" {
-                ScreamAndRushMainView()
+                MeasurementToolkitWrapperView()
             } else {
                 SplashView()
                     .environmentObject(appState)
